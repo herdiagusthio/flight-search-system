@@ -1,0 +1,92 @@
+# ==================================
+# Go
+# ==================================
+# Binaries
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+bin/
+dist/
+
+# Test binary, built with `go test -c`
+*.test
+
+# Output of the go coverage tool
+*.out
+coverage.html
+coverage.txt
+
+# Go workspace file
+go.work
+go.work.sum
+
+# ==================================
+# Dependency directories
+# ==================================
+# Uncomment if you prefer not to vendor dependencies
+vendor/
+
+# ==================================
+# Environment
+# ==================================
+.env
+.env.local
+.env.*.local
+*.env
+
+# ==================================
+# IDE and Editors
+# ==================================
+# VSCode
+.vscode/
+*.code-workspace
+
+# GoLand / JetBrains
+.idea/
+*.iml
+
+# Vim
+*.swp
+*.swo
+*~
+
+# ==================================
+# OS Generated Files
+# ==================================
+# macOS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Linux
+*~
+
+# ==================================
+# Logs and Databases
+# ==================================
+*.log
+*.sqlite
+*.db
+
+# ==================================
+# Temporary Files
+# ==================================
+tmp/
+temp/
+*.tmp
+*.temp
+
+# ==================================
+# Build and Debug
+# ==================================
+debug
+__debug_bin*
