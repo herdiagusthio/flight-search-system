@@ -1,4 +1,4 @@
-package entity
+package garuda
 
 // GarudaResponse represents the root response structure from Garuda Indonesia API.
 type GarudaResponse struct {
@@ -47,11 +47,11 @@ type GarudaBaggage struct {
 
 // GarudaSegment represents a flight segment for multi-leg flights.
 type GarudaSegment struct {
-	FlightNumber    string               `json:"flight_number"`
-	Departure       GarudaSegmentPoint   `json:"departure"`
-	Arrival         GarudaSegmentPoint   `json:"arrival"`
-	DurationMinutes int                  `json:"duration_minutes"`
-	LayoverMinutes  int                  `json:"layover_minutes,omitempty"`
+	FlightNumber    string             `json:"flight_number"`
+	Departure       GarudaSegmentPoint `json:"departure"`
+	Arrival         GarudaSegmentPoint `json:"arrival"`
+	DurationMinutes int                `json:"duration_minutes"`
+	LayoverMinutes  int                `json:"layover_minutes,omitempty"`
 }
 
 // GarudaSegmentPoint represents a point within a segment.

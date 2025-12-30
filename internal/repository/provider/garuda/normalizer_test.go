@@ -3,34 +3,33 @@ package garuda
 import (
 	"testing"
 
-	"github.com/herdiagusthio/flight-search-system/internal/entity"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestNormalize(t *testing.T) {
-	flights := []entity.GarudaFlight{
+	flights := []GarudaFlight{
 		{
 			FlightID:    "GA-123",
 			Airline:     "Garuda Indonesia",
 			AirlineCode: "GA",
-			Departure: entity.GarudaEndpoint{
+			Departure: GarudaEndpoint{
 				Airport:  "CGK",
 				City:     "Jakarta",
 				Terminal: "3",
 				Time:     "2025-12-15T06:00:00+07:00",
 			},
-			Arrival: entity.GarudaEndpoint{
+			Arrival: GarudaEndpoint{
 				Airport: "DPS",
 				City:    "Bali",
 				Time:    "2025-12-15T08:00:00+08:00",
 			},
 			DurationMinutes: 120,
-			Price: entity.GarudaPrice{
+			Price: GarudaPrice{
 				Amount:   1500000,
 				Currency: "IDR",
 			},
 			FareClass: "Economy",
-			Baggage: entity.GarudaBaggage{
+			Baggage: GarudaBaggage{
 				CarryOn: 1,
 				Checked: 1,
 			},
@@ -51,26 +50,26 @@ func TestNormalize(t *testing.T) {
 func TestNormalizeFlight(t *testing.T) {
 	tests := []struct {
 		name        string
-		flight      entity.GarudaFlight
+		flight      GarudaFlight
 		expectError bool
 		expectStops int
 	}{
 		{
 			name: "valid direct flight",
-			flight: entity.GarudaFlight{
+			flight: GarudaFlight{
 				FlightID:    "GA-100",
 				Airline:     "Garuda Indonesia",
 				AirlineCode: "GA",
-				Departure: entity.GarudaEndpoint{
+				Departure: GarudaEndpoint{
 					Airport: "CGK",
 					Time:    "2025-12-15T10:00:00+07:00",
 				},
-				Arrival: entity.GarudaEndpoint{
+				Arrival: GarudaEndpoint{
 					Airport: "DPS",
 					Time:    "2025-12-15T12:00:00+08:00",
 				},
 				DurationMinutes: 120,
-				Price:           entity.GarudaPrice{Amount: 1000000, Currency: "IDR"},
+				Price:           GarudaPrice{Amount: 1000000, Currency: "IDR"},
 				FareClass:       "Y",
 				Stops:           0,
 			},
@@ -79,36 +78,36 @@ func TestNormalizeFlight(t *testing.T) {
 		},
 		{
 			name: "flight with segments",
-			flight: entity.GarudaFlight{
+			flight: GarudaFlight{
 				FlightID:    "GA-200",
 				Airline:     "Garuda Indonesia",
 				AirlineCode: "GA",
-				Departure: entity.GarudaEndpoint{
+				Departure: GarudaEndpoint{
 					Airport: "CGK",
 					Time:    "2025-12-15T08:00:00+07:00",
 				},
-				Arrival: entity.GarudaEndpoint{
+				Arrival: GarudaEndpoint{
 					Airport: "SIN",
 					Time:    "2025-12-15T14:00:00+08:00",
 				},
 				DurationMinutes: 300,
-				Price:           entity.GarudaPrice{Amount: 2000000, Currency: "IDR"},
+				Price:           GarudaPrice{Amount: 2000000, Currency: "IDR"},
 				FareClass:       "C",
 				Stops:           1,
-				Segments:        []entity.GarudaSegment{{}, {}},
+				Segments:        []GarudaSegment{{}, {}},
 			},
 			expectError: false,
 			expectStops: 1,
 		},
 		{
 			name: "invalid departure time",
-			flight: entity.GarudaFlight{
+			flight: GarudaFlight{
 				FlightID: "GA-BAD",
-				Departure: entity.GarudaEndpoint{
+				Departure: GarudaEndpoint{
 					Airport: "CGK",
 					Time:    "invalid",
 				},
-				Arrival: entity.GarudaEndpoint{
+				Arrival: GarudaEndpoint{
 					Airport: "DPS",
 					Time:    "2025-12-15T12:00:00+07:00",
 				},
@@ -117,13 +116,13 @@ func TestNormalizeFlight(t *testing.T) {
 		},
 		{
 			name: "invalid arrival time",
-			flight: entity.GarudaFlight{
+			flight: GarudaFlight{
 				FlightID: "GA-BAD2",
-				Departure: entity.GarudaEndpoint{
+				Departure: GarudaEndpoint{
 					Airport: "CGK",
 					Time:    "2025-12-15T10:00:00+07:00",
 				},
-				Arrival: entity.GarudaEndpoint{
+				Arrival: GarudaEndpoint{
 					Airport: "DPS",
 					Time:    "invalid",
 				},

@@ -3,23 +3,22 @@ package lionair
 import (
 	"testing"
 
-	"github.com/herdiagusthio/flight-search-system/internal/entity"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestNormalize(t *testing.T) {
-	flights := []entity.LionAirFlight{
+	flights := []LionAirFlight{
 		{
 			ID: "JT-123",
-			Carrier: entity.LionAirCarrier{
+			Carrier: LionAirCarrier{
 				IATA: "JT",
 				Name: "Lion Air",
 			},
-			Route: entity.LionAirRoute{
-				From: entity.LionAirAirport{Code: "CGK", Name: "Soekarno-Hatta"},
-				To:   entity.LionAirAirport{Code: "DPS", Name: "Ngurah Rai"},
+			Route: LionAirRoute{
+				From: LionAirAirport{Code: "CGK", Name: "Soekarno-Hatta"},
+				To:   LionAirAirport{Code: "DPS", Name: "Ngurah Rai"},
 			},
-			Schedule: entity.LionAirSchedule{
+			Schedule: LionAirSchedule{
 				Departure:         "2025-12-15T06:00:00",
 				DepartureTimezone: "Asia/Jakarta",
 				Arrival:           "2025-12-15T08:00:00",
@@ -27,13 +26,13 @@ func TestNormalize(t *testing.T) {
 			},
 			FlightTime: 120,
 			IsDirect:   true,
-			Pricing: entity.LionAirPricing{
+			Pricing: LionAirPricing{
 				Total:    900000,
 				Currency: "IDR",
 				FareType: "economy",
 			},
-			Services: entity.LionAirServices{
-				BaggageAllowance: entity.LionAirBaggageAllowance{
+			Services: LionAirServices{
+				BaggageAllowance: LionAirBaggageAllowance{
 					Cabin: "7 kg",
 					Hold:  "20 kg",
 				},
@@ -54,20 +53,20 @@ func TestNormalize(t *testing.T) {
 func TestNormalizeFlight(t *testing.T) {
 	tests := []struct {
 		name        string
-		flight      entity.LionAirFlight
+		flight      LionAirFlight
 		expectError bool
 		expectStops int
 	}{
 		{
 			name: "valid direct flight",
-			flight: entity.LionAirFlight{
+			flight: LionAirFlight{
 				ID:      "JT-100",
-				Carrier: entity.LionAirCarrier{IATA: "JT", Name: "Lion Air"},
-				Route: entity.LionAirRoute{
-					From: entity.LionAirAirport{Code: "CGK"},
-					To:   entity.LionAirAirport{Code: "DPS"},
+				Carrier: LionAirCarrier{IATA: "JT", Name: "Lion Air"},
+				Route: LionAirRoute{
+					From: LionAirAirport{Code: "CGK"},
+					To:   LionAirAirport{Code: "DPS"},
 				},
-				Schedule: entity.LionAirSchedule{
+				Schedule: LionAirSchedule{
 					Departure:         "2025-12-15T10:00:00",
 					DepartureTimezone: "Asia/Jakarta",
 					Arrival:           "2025-12-15T12:00:00",
@@ -75,9 +74,9 @@ func TestNormalizeFlight(t *testing.T) {
 				},
 				FlightTime: 120,
 				IsDirect:   true,
-				Pricing:    entity.LionAirPricing{Total: 800000, Currency: "IDR", FareType: "Y"},
-				Services: entity.LionAirServices{
-					BaggageAllowance: entity.LionAirBaggageAllowance{Cabin: "7 kg", Hold: "20 kg"},
+				Pricing:    LionAirPricing{Total: 800000, Currency: "IDR", FareType: "Y"},
+				Services: LionAirServices{
+					BaggageAllowance: LionAirBaggageAllowance{Cabin: "7 kg", Hold: "20 kg"},
 				},
 			},
 			expectError: false,
@@ -85,14 +84,14 @@ func TestNormalizeFlight(t *testing.T) {
 		},
 		{
 			name: "connecting flight",
-			flight: entity.LionAirFlight{
+			flight: LionAirFlight{
 				ID:      "JT-200",
-				Carrier: entity.LionAirCarrier{IATA: "JT", Name: "Lion Air"},
-				Route: entity.LionAirRoute{
-					From: entity.LionAirAirport{Code: "CGK"},
-					To:   entity.LionAirAirport{Code: "SIN"},
+				Carrier: LionAirCarrier{IATA: "JT", Name: "Lion Air"},
+				Route: LionAirRoute{
+					From: LionAirAirport{Code: "CGK"},
+					To:   LionAirAirport{Code: "SIN"},
 				},
-				Schedule: entity.LionAirSchedule{
+				Schedule: LionAirSchedule{
 					Departure:         "2025-12-15T08:00:00",
 					DepartureTimezone: "Asia/Jakarta",
 					Arrival:           "2025-12-15T14:00:00",
@@ -101,9 +100,9 @@ func TestNormalizeFlight(t *testing.T) {
 				FlightTime: 300,
 				IsDirect:   false,
 				StopCount:  1,
-				Pricing:    entity.LionAirPricing{Total: 1500000, Currency: "IDR", FareType: "C"},
-				Services: entity.LionAirServices{
-					BaggageAllowance: entity.LionAirBaggageAllowance{Cabin: "7 kg", Hold: "30 kg"},
+				Pricing:    LionAirPricing{Total: 1500000, Currency: "IDR", FareType: "C"},
+				Services: LionAirServices{
+					BaggageAllowance: LionAirBaggageAllowance{Cabin: "7 kg", Hold: "30 kg"},
 				},
 			},
 			expectError: false,
@@ -111,9 +110,9 @@ func TestNormalizeFlight(t *testing.T) {
 		},
 		{
 			name: "invalid departure time",
-			flight: entity.LionAirFlight{
+			flight: LionAirFlight{
 				ID: "JT-BAD",
-				Schedule: entity.LionAirSchedule{
+				Schedule: LionAirSchedule{
 					Departure:         "invalid",
 					DepartureTimezone: "Asia/Jakarta",
 					Arrival:           "2025-12-15T12:00:00",
@@ -124,9 +123,9 @@ func TestNormalizeFlight(t *testing.T) {
 		},
 		{
 			name: "invalid arrival time",
-			flight: entity.LionAirFlight{
+			flight: LionAirFlight{
 				ID: "JT-BAD2",
-				Schedule: entity.LionAirSchedule{
+				Schedule: LionAirSchedule{
 					Departure:         "2025-12-15T10:00:00",
 					DepartureTimezone: "Asia/Jakarta",
 					Arrival:           "invalid",
@@ -226,15 +225,15 @@ func TestNormalizeClass(t *testing.T) {
 
 func TestNormalizeWithValidationFailure(t *testing.T) {
 	// Flight with arrival before departure
-	flights := []entity.LionAirFlight{
+	flights := []LionAirFlight{
 		{
 			ID:      "JT-BAD",
-			Carrier: entity.LionAirCarrier{IATA: "JT", Name: "Lion Air"},
-			Route: entity.LionAirRoute{
-				From: entity.LionAirAirport{Code: "CGK"},
-				To:   entity.LionAirAirport{Code: "DPS"},
+			Carrier: LionAirCarrier{IATA: "JT", Name: "Lion Air"},
+			Route: LionAirRoute{
+				From: LionAirAirport{Code: "CGK"},
+				To:   LionAirAirport{Code: "DPS"},
 			},
-			Schedule: entity.LionAirSchedule{
+			Schedule: LionAirSchedule{
 				Departure:         "2025-12-15T12:00:00",
 				DepartureTimezone: "Asia/Jakarta",
 				Arrival:           "2025-12-15T10:00:00", // Before departure
@@ -242,8 +241,8 @@ func TestNormalizeWithValidationFailure(t *testing.T) {
 			},
 			FlightTime: 120,
 			IsDirect:   true,
-			Pricing:    entity.LionAirPricing{Total: 800000, Currency: "IDR", FareType: "Y"},
-			Services:   entity.LionAirServices{BaggageAllowance: entity.LionAirBaggageAllowance{Cabin: "7 kg", Hold: "20 kg"}},
+			Pricing:    LionAirPricing{Total: 800000, Currency: "IDR", FareType: "Y"},
+			Services:   LionAirServices{BaggageAllowance: LionAirBaggageAllowance{Cabin: "7 kg", Hold: "20 kg"}},
 		},
 	}
 
@@ -252,14 +251,14 @@ func TestNormalizeWithValidationFailure(t *testing.T) {
 }
 
 func TestNormalizeFlightWithLayovers(t *testing.T) {
-	flight := entity.LionAirFlight{
+	flight := LionAirFlight{
 		ID:      "JT-300",
-		Carrier: entity.LionAirCarrier{IATA: "JT", Name: "Lion Air"},
-		Route: entity.LionAirRoute{
-			From: entity.LionAirAirport{Code: "CGK"},
-			To:   entity.LionAirAirport{Code: "SIN"},
+		Carrier: LionAirCarrier{IATA: "JT", Name: "Lion Air"},
+		Route: LionAirRoute{
+			From: LionAirAirport{Code: "CGK"},
+			To:   LionAirAirport{Code: "SIN"},
 		},
-		Schedule: entity.LionAirSchedule{
+		Schedule: LionAirSchedule{
 			Departure:         "2025-12-15T08:00:00",
 			DepartureTimezone: "Asia/Jakarta",
 			Arrival:           "2025-12-15T16:00:00",
@@ -268,12 +267,12 @@ func TestNormalizeFlightWithLayovers(t *testing.T) {
 		FlightTime: 360,
 		IsDirect:   false,
 		StopCount:  0, // No StopCount set
-		Layovers: []entity.LionAirLayover{
+		Layovers: []LionAirLayover{
 			{Airport: "KUL", DurationMinutes: 60},
 			{Airport: "BTH", DurationMinutes: 45},
 		},
-		Pricing:  entity.LionAirPricing{Total: 2000000, Currency: "IDR", FareType: "Y"},
-		Services: entity.LionAirServices{BaggageAllowance: entity.LionAirBaggageAllowance{Cabin: "7 kg", Hold: "30 kg"}},
+		Pricing:  LionAirPricing{Total: 2000000, Currency: "IDR", FareType: "Y"},
+		Services: LionAirServices{BaggageAllowance: LionAirBaggageAllowance{Cabin: "7 kg", Hold: "30 kg"}},
 	}
 
 	result, err := normalizeFlight(flight)
@@ -282,36 +281,36 @@ func TestNormalizeFlightWithLayovers(t *testing.T) {
 }
 
 func TestNormalizeWithMultipleFlights(t *testing.T) {
-	flights := []entity.LionAirFlight{
+	flights := []LionAirFlight{
 		{
 			ID:      "JT-1",
-			Carrier: entity.LionAirCarrier{IATA: "JT", Name: "Lion Air"},
-			Route: entity.LionAirRoute{
-				From: entity.LionAirAirport{Code: "CGK"},
-				To:   entity.LionAirAirport{Code: "DPS"},
+			Carrier: LionAirCarrier{IATA: "JT", Name: "Lion Air"},
+			Route: LionAirRoute{
+				From: LionAirAirport{Code: "CGK"},
+				To:   LionAirAirport{Code: "DPS"},
 			},
-			Schedule: entity.LionAirSchedule{
+			Schedule: LionAirSchedule{
 				Departure: "2025-12-15T06:00:00", DepartureTimezone: "Asia/Jakarta",
 				Arrival: "2025-12-15T08:00:00", ArrivalTimezone: "Asia/Makassar",
 			},
 			FlightTime: 120, IsDirect: true,
-			Pricing:  entity.LionAirPricing{Total: 800000, Currency: "IDR", FareType: "Y"},
-			Services: entity.LionAirServices{BaggageAllowance: entity.LionAirBaggageAllowance{Cabin: "7 kg", Hold: "20 kg"}},
+			Pricing:  LionAirPricing{Total: 800000, Currency: "IDR", FareType: "Y"},
+			Services: LionAirServices{BaggageAllowance: LionAirBaggageAllowance{Cabin: "7 kg", Hold: "20 kg"}},
 		},
 		{
 			ID:      "JT-2",
-			Carrier: entity.LionAirCarrier{IATA: "JT", Name: "Lion Air"},
-			Route: entity.LionAirRoute{
-				From: entity.LionAirAirport{Code: "CGK"},
-				To:   entity.LionAirAirport{Code: "SUB"},
+			Carrier: LionAirCarrier{IATA: "JT", Name: "Lion Air"},
+			Route: LionAirRoute{
+				From: LionAirAirport{Code: "CGK"},
+				To:   LionAirAirport{Code: "SUB"},
 			},
-			Schedule: entity.LionAirSchedule{
+			Schedule: LionAirSchedule{
 				Departure: "2025-12-15T09:00:00", DepartureTimezone: "Asia/Jakarta",
 				Arrival: "2025-12-15T10:30:00", ArrivalTimezone: "Asia/Jakarta",
 			},
 			FlightTime: 90, IsDirect: true,
-			Pricing:  entity.LionAirPricing{Total: 600000, Currency: "IDR", FareType: "C"},
-			Services: entity.LionAirServices{BaggageAllowance: entity.LionAirBaggageAllowance{Cabin: "7 kg", Hold: "25 kg"}},
+			Pricing:  LionAirPricing{Total: 600000, Currency: "IDR", FareType: "C"},
+			Services: LionAirServices{BaggageAllowance: LionAirBaggageAllowance{Cabin: "7 kg", Hold: "25 kg"}},
 		},
 	}
 
@@ -320,43 +319,43 @@ func TestNormalizeWithMultipleFlights(t *testing.T) {
 }
 
 func TestNormalizeWithMixedValidAndInvalidFlights(t *testing.T) {
-	flights := []entity.LionAirFlight{
+	flights := []LionAirFlight{
 		{
 			ID:      "JT-VALID",
-			Carrier: entity.LionAirCarrier{IATA: "JT", Name: "Lion Air"},
-			Route: entity.LionAirRoute{
-				From: entity.LionAirAirport{Code: "CGK"},
-				To:   entity.LionAirAirport{Code: "DPS"},
+			Carrier: LionAirCarrier{IATA: "JT", Name: "Lion Air"},
+			Route: LionAirRoute{
+				From: LionAirAirport{Code: "CGK"},
+				To:   LionAirAirport{Code: "DPS"},
 			},
-			Schedule: entity.LionAirSchedule{
+			Schedule: LionAirSchedule{
 				Departure: "2025-12-15T06:00:00", DepartureTimezone: "Asia/Jakarta",
 				Arrival: "2025-12-15T08:00:00", ArrivalTimezone: "Asia/Makassar",
 			},
 			FlightTime: 120, IsDirect: true,
-			Pricing:  entity.LionAirPricing{Total: 800000, Currency: "IDR", FareType: "Y"},
-			Services: entity.LionAirServices{BaggageAllowance: entity.LionAirBaggageAllowance{Cabin: "7 kg", Hold: "20 kg"}},
+			Pricing:  LionAirPricing{Total: 800000, Currency: "IDR", FareType: "Y"},
+			Services: LionAirServices{BaggageAllowance: LionAirBaggageAllowance{Cabin: "7 kg", Hold: "20 kg"}},
 		},
 		{
 			ID: "JT-INVALID-TIME",
-			Schedule: entity.LionAirSchedule{
+			Schedule: LionAirSchedule{
 				Departure: "invalid", DepartureTimezone: "Asia/Jakarta",
 				Arrival: "2025-12-15T08:00:00", ArrivalTimezone: "Asia/Jakarta",
 			},
 		},
 		{
 			ID:      "JT-VALID-2",
-			Carrier: entity.LionAirCarrier{IATA: "JT", Name: "Lion Air"},
-			Route: entity.LionAirRoute{
-				From: entity.LionAirAirport{Code: "CGK"},
-				To:   entity.LionAirAirport{Code: "SUB"},
+			Carrier: LionAirCarrier{IATA: "JT", Name: "Lion Air"},
+			Route: LionAirRoute{
+				From: LionAirAirport{Code: "CGK"},
+				To:   LionAirAirport{Code: "SUB"},
 			},
-			Schedule: entity.LionAirSchedule{
+			Schedule: LionAirSchedule{
 				Departure: "2025-12-15T09:00:00", DepartureTimezone: "Asia/Jakarta",
 				Arrival: "2025-12-15T10:30:00", ArrivalTimezone: "Asia/Jakarta",
 			},
 			FlightTime: 90, IsDirect: true,
-			Pricing:  entity.LionAirPricing{Total: 600000, Currency: "IDR", FareType: "Y"},
-			Services: entity.LionAirServices{BaggageAllowance: entity.LionAirBaggageAllowance{Cabin: "7 kg", Hold: "25 kg"}},
+			Pricing:  LionAirPricing{Total: 600000, Currency: "IDR", FareType: "Y"},
+			Services: LionAirServices{BaggageAllowance: LionAirBaggageAllowance{Cabin: "7 kg", Hold: "25 kg"}},
 		},
 	}
 
@@ -365,14 +364,14 @@ func TestNormalizeWithMixedValidAndInvalidFlights(t *testing.T) {
 }
 
 func TestNormalizeFlightWithStopCountOnly(t *testing.T) {
-	flight := entity.LionAirFlight{
+	flight := LionAirFlight{
 		ID:      "JT-400",
-		Carrier: entity.LionAirCarrier{IATA: "JT", Name: "Lion Air"},
-		Route: entity.LionAirRoute{
-			From: entity.LionAirAirport{Code: "CGK"},
-			To:   entity.LionAirAirport{Code: "SIN"},
+		Carrier: LionAirCarrier{IATA: "JT", Name: "Lion Air"},
+		Route: LionAirRoute{
+			From: LionAirAirport{Code: "CGK"},
+			To:   LionAirAirport{Code: "SIN"},
 		},
-		Schedule: entity.LionAirSchedule{
+		Schedule: LionAirSchedule{
 			Departure:         "2025-12-15T08:00:00",
 			DepartureTimezone: "Asia/Jakarta",
 			Arrival:           "2025-12-15T14:00:00",
@@ -382,8 +381,8 @@ func TestNormalizeFlightWithStopCountOnly(t *testing.T) {
 		IsDirect:   false,
 		StopCount:  2, // StopCount set but no layovers array
 		Layovers:   nil,
-		Pricing:    entity.LionAirPricing{Total: 1800000, Currency: "IDR", FareType: "Y"},
-		Services:   entity.LionAirServices{BaggageAllowance: entity.LionAirBaggageAllowance{Cabin: "7 kg", Hold: "30 kg"}},
+		Pricing:    LionAirPricing{Total: 1800000, Currency: "IDR", FareType: "Y"},
+		Services:   LionAirServices{BaggageAllowance: LionAirBaggageAllowance{Cabin: "7 kg", Hold: "30 kg"}},
 	}
 
 	result, err := normalizeFlight(flight)

@@ -6,11 +6,10 @@ import (
 	"time"
 
 	"github.com/herdiagusthio/flight-search-system/domain"
-	"github.com/herdiagusthio/flight-search-system/internal/entity"
 	"github.com/rs/zerolog/log"
 )
 
-func normalize(garudaFlights []entity.GarudaFlight) []domain.Flight {
+func normalize(garudaFlights []GarudaFlight) []domain.Flight {
 	result := make([]domain.Flight, 0, len(garudaFlights))
 	skippedCount := 0
 
@@ -46,7 +45,7 @@ func normalize(garudaFlights []entity.GarudaFlight) []domain.Flight {
 }
 
 // normalizeFlight converts a single Garuda flight to a domain Flight entity.
-func normalizeFlight(f entity.GarudaFlight) (domain.Flight, error) {
+func normalizeFlight(f GarudaFlight) (domain.Flight, error) {
 	// Parse departure time
 	departureTime, err := parseDateTime(f.Departure.Time)
 	if err != nil {

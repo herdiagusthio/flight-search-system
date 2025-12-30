@@ -1,8 +1,8 @@
-package entity
+package airasia
 
 // AirAsiaResponse represents the root response from AirAsia API.
 type AirAsiaResponse struct {
-	Status string `json:"status"`
+	Status  string          `json:"status"`
 	Flights []AirAsiaFlight `json:"flights"`
 }
 

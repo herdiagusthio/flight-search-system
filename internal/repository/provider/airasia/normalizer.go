@@ -7,11 +7,10 @@ import (
 	"time"
 
 	"github.com/herdiagusthio/flight-search-system/domain"
-	"github.com/herdiagusthio/flight-search-system/internal/entity"
 	"github.com/rs/zerolog/log"
 )
 
-func normalize(flights []entity.AirAsiaFlight) []domain.Flight {
+func normalize(flights []AirAsiaFlight) []domain.Flight {
 	result := make([]domain.Flight, 0, len(flights))
 	skippedCount := 0
 
@@ -48,7 +47,7 @@ func normalize(flights []entity.AirAsiaFlight) []domain.Flight {
 
 // normalizeSingle converts a single AirAsiaFlight to a domain.Flight.
 // Returns false if the flight cannot be normalized (e.g., invalid datetime).
-func normalizeSingle(f entity.AirAsiaFlight) (domain.Flight, bool) {
+func normalizeSingle(f AirAsiaFlight) (domain.Flight, bool) {
 	departureTime, err := parseDateTime(f.DepartTime)
 	if err != nil {
 		return domain.Flight{}, false
@@ -97,7 +96,7 @@ func normalizeSingle(f entity.AirAsiaFlight) (domain.Flight, bool) {
 }
 
 // generateFlightID creates a unique identifier for a flight.
-func generateFlightID(f entity.AirAsiaFlight) string {
+func generateFlightID(f AirAsiaFlight) string {
 	return fmt.Sprintf("%s-%s-%s-%s", ProviderName, f.FlightCode, f.FromAirport, f.ToAirport)
 }
 
@@ -126,7 +125,7 @@ func formatDurationFromHours(hours float64) string {
 // directFlightToStops converts the direct_flight boolean to stops count.
 // If direct_flight is true, returns 0.
 // If direct_flight is false, returns the actual number of stops or 1 if unknown.
-func directFlightToStops(isDirect bool, stops []entity.AirAsiaStop) int {
+func directFlightToStops(isDirect bool, stops []AirAsiaStop) int {
 	if isDirect {
 		return 0
 	}

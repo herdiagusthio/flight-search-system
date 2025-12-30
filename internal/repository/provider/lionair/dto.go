@@ -1,9 +1,9 @@
-package entity
+package lionair
 
 // LionAirResponse represents the root response structure from Lion Air API.
 type LionAirResponse struct {
-	Success bool           `json:"success"`
-	Data    LionAirData    `json:"data"`
+	Success bool        `json:"success"`
+	Data    LionAirData `json:"data"`
 }
 
 // LionAirData contains the flight data.
@@ -69,8 +69,8 @@ type LionAirPricing struct {
 
 // LionAirServices contains additional service information.
 type LionAirServices struct {
-	WiFiAvailable    bool                  `json:"wifi_available"`
-	MealsIncluded    bool                  `json:"meals_included"`
+	WiFiAvailable    bool                    `json:"wifi_available"`
+	MealsIncluded    bool                    `json:"meals_included"`
 	BaggageAllowance LionAirBaggageAllowance `json:"baggage_allowance"`
 }
 

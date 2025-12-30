@@ -3,12 +3,11 @@ package batikair
 import (
 	"testing"
 
-	"github.com/herdiagusthio/flight-search-system/internal/entity"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestNormalize(t *testing.T) {
-	flights := []entity.BatikAirFlight{
+	flights := []BatikAirFlight{
 		{
 			FlightNumber:      "ID-123",
 			AirlineName:       "Batik Air",
@@ -19,7 +18,7 @@ func TestNormalize(t *testing.T) {
 			ArrivalDateTime:   "2025-12-15T08:00:00+08:00",
 			TravelTime:        "2h 0m",
 			NumberOfStops:     0,
-			Fare: entity.BatikAirFare{
+			Fare: BatikAirFare{
 				BasePrice:    1000000,
 				Taxes:        200000,
 				TotalPrice:   1200000,
@@ -43,12 +42,12 @@ func TestNormalize(t *testing.T) {
 func TestNormalizeFlight(t *testing.T) {
 	tests := []struct {
 		name        string
-		flight      entity.BatikAirFlight
+		flight      BatikAirFlight
 		expectError bool
 	}{
 		{
 			name: "valid flight",
-			flight: entity.BatikAirFlight{
+			flight: BatikAirFlight{
 				FlightNumber:      "ID-100",
 				AirlineName:       "Batik Air",
 				AirlineIATA:       "ID",
@@ -57,13 +56,13 @@ func TestNormalizeFlight(t *testing.T) {
 				DepartureDateTime: "2025-12-15T10:00:00+07:00",
 				ArrivalDateTime:   "2025-12-15T12:00:00+08:00",
 				TravelTime:        "2h 0m",
-				Fare:              entity.BatikAirFare{TotalPrice: 1000000, CurrencyCode: "IDR", Class: "Y"},
+				Fare:              BatikAirFare{TotalPrice: 1000000, CurrencyCode: "IDR", Class: "Y"},
 			},
 			expectError: false,
 		},
 		{
 			name: "invalid departure",
-			flight: entity.BatikAirFlight{
+			flight: BatikAirFlight{
 				DepartureDateTime: "invalid",
 				ArrivalDateTime:   "2025-12-15T12:00:00+07:00",
 				TravelTime:        "2h",
@@ -72,7 +71,7 @@ func TestNormalizeFlight(t *testing.T) {
 		},
 		{
 			name: "invalid arrival",
-			flight: entity.BatikAirFlight{
+			flight: BatikAirFlight{
 				DepartureDateTime: "2025-12-15T10:00:00+07:00",
 				ArrivalDateTime:   "invalid",
 				TravelTime:        "2h",
@@ -81,7 +80,7 @@ func TestNormalizeFlight(t *testing.T) {
 		},
 		{
 			name: "invalid travel time",
-			flight: entity.BatikAirFlight{
+			flight: BatikAirFlight{
 				DepartureDateTime: "2025-12-15T10:00:00+07:00",
 				ArrivalDateTime:   "2025-12-15T12:00:00+07:00",
 				TravelTime:        "",
@@ -195,7 +194,7 @@ func TestMapCabinClass(t *testing.T) {
 
 func TestNormalizeWithValidationFailure(t *testing.T) {
 	// Flight with arrival before departure
-	flights := []entity.BatikAirFlight{
+	flights := []BatikAirFlight{
 		{
 			FlightNumber:      "ID-BAD",
 			AirlineName:       "Batik Air",
@@ -206,7 +205,7 @@ func TestNormalizeWithValidationFailure(t *testing.T) {
 			ArrivalDateTime:   "2025-12-15T10:00:00+07:00", // Before departure
 			TravelTime:        "2h 0m",
 			NumberOfStops:     0,
-			Fare: entity.BatikAirFare{
+			Fare: BatikAirFare{
 				TotalPrice:   1000000,
 				CurrencyCode: "IDR",
 				Class:        "Y",
@@ -220,7 +219,7 @@ func TestNormalizeWithValidationFailure(t *testing.T) {
 
 func TestNormalizeFlightPriceFallback(t *testing.T) {
 	// Flight with zero TotalPrice, should use BasePrice + Taxes
-	flight := entity.BatikAirFlight{
+	flight := BatikAirFlight{
 		FlightNumber:      "ID-100",
 		AirlineName:       "Batik Air",
 		AirlineIATA:       "ID",
@@ -229,7 +228,7 @@ func TestNormalizeFlightPriceFallback(t *testing.T) {
 		DepartureDateTime: "2025-12-15T10:00:00+07:00",
 		ArrivalDateTime:   "2025-12-15T12:00:00+08:00",
 		TravelTime:        "2h 0m",
-		Fare: entity.BatikAirFare{
+		Fare: BatikAirFare{
 			BasePrice:    800000,
 			Taxes:        100000,
 			TotalPrice:   0,
@@ -244,7 +243,7 @@ func TestNormalizeFlightPriceFallback(t *testing.T) {
 }
 
 func TestNormalizeWithMultipleFlights(t *testing.T) {
-	flights := []entity.BatikAirFlight{
+	flights := []BatikAirFlight{
 		{
 			FlightNumber:      "ID-1",
 			AirlineName:       "Batik Air",
@@ -254,7 +253,7 @@ func TestNormalizeWithMultipleFlights(t *testing.T) {
 			DepartureDateTime: "2025-12-15T06:00:00+07:00",
 			ArrivalDateTime:   "2025-12-15T08:00:00+08:00",
 			TravelTime:        "2h 0m",
-			Fare:              entity.BatikAirFare{TotalPrice: 1000000, CurrencyCode: "IDR", Class: "Y"},
+			Fare:              BatikAirFare{TotalPrice: 1000000, CurrencyCode: "IDR", Class: "Y"},
 		},
 		{
 			FlightNumber:      "ID-2",
@@ -265,7 +264,7 @@ func TestNormalizeWithMultipleFlights(t *testing.T) {
 			DepartureDateTime: "2025-12-15T09:00:00+07:00",
 			ArrivalDateTime:   "2025-12-15T10:30:00+07:00",
 			TravelTime:        "1h 30m",
-			Fare:              entity.BatikAirFare{TotalPrice: 800000, CurrencyCode: "IDR", Class: "C"},
+			Fare:              BatikAirFare{TotalPrice: 800000, CurrencyCode: "IDR", Class: "C"},
 		},
 	}
 

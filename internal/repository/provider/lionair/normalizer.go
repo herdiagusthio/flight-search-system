@@ -7,11 +7,10 @@ import (
 	"time"
 
 	"github.com/herdiagusthio/flight-search-system/domain"
-	"github.com/herdiagusthio/flight-search-system/internal/entity"
 	"github.com/rs/zerolog/log"
 )
 
-func normalize(lionAirFlights []entity.LionAirFlight) []domain.Flight {
+func normalize(lionAirFlights []LionAirFlight) []domain.Flight {
 	result := make([]domain.Flight, 0, len(lionAirFlights))
 	skippedCount := 0
 
@@ -47,7 +46,7 @@ func normalize(lionAirFlights []entity.LionAirFlight) []domain.Flight {
 }
 
 // normalizeFlight converts a single Lion Air flight to a domain Flight entity.
-func normalizeFlight(f entity.LionAirFlight) (domain.Flight, error) {
+func normalizeFlight(f LionAirFlight) (domain.Flight, error) {
 	// Parse departure time with timezone
 	departureTime, err := parseDateTimeWithTimezone(f.Schedule.Departure, f.Schedule.DepartureTimezone)
 	if err != nil {

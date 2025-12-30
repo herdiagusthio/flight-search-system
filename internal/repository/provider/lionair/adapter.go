@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/herdiagusthio/flight-search-system/domain"
-	"github.com/herdiagusthio/flight-search-system/internal/entity"
 )
 
 const (
@@ -80,7 +79,7 @@ func (a *Adapter) Search(ctx context.Context, criteria domain.SearchCriteria) ([
 		}
 	}
 
-	var response entity.LionAirResponse
+	var response LionAirResponse
 	if err := json.Unmarshal(data, &response); err != nil {
 		return nil, &domain.ProviderError{
 			Provider:  ProviderName,

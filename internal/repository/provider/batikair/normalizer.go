@@ -8,13 +8,12 @@ import (
 	"time"
 
 	"github.com/herdiagusthio/flight-search-system/domain"
-	"github.com/herdiagusthio/flight-search-system/internal/entity"
 	"github.com/rs/zerolog/log"
 )
 
 var durationRegex = regexp.MustCompile(`(?:(\d+)h)?\s*(?:(\d+)m)?`)
 
-func normalize(batikAirFlights []entity.BatikAirFlight) []domain.Flight {
+func normalize(batikAirFlights []BatikAirFlight) []domain.Flight {
 	result := make([]domain.Flight, 0, len(batikAirFlights))
 	skippedCount := 0
 
@@ -50,7 +49,7 @@ func normalize(batikAirFlights []entity.BatikAirFlight) []domain.Flight {
 }
 
 // normalizeFlight converts a single Batik Air flight to a domain Flight entity.
-func normalizeFlight(f entity.BatikAirFlight) (domain.Flight, error) {
+func normalizeFlight(f BatikAirFlight) (domain.Flight, error) {
 	// Parse departure time
 	departureTime, err := parseDateTime(f.DepartureDateTime)
 	if err != nil {

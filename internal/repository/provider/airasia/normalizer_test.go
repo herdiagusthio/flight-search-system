@@ -4,12 +4,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/herdiagusthio/flight-search-system/internal/entity"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestNormalize(t *testing.T) {
-	flights := []entity.AirAsiaFlight{
+	flights := []AirAsiaFlight{
 		{
 			FlightCode:   "QZ-123",
 			Airline:      "AirAsia",
@@ -42,13 +41,13 @@ func TestNormalize(t *testing.T) {
 func TestNormalizeSingle(t *testing.T) {
 	tests := []struct {
 		name        string
-		flight      entity.AirAsiaFlight
+		flight      AirAsiaFlight
 		expectOK    bool
 		expectStops int
 	}{
 		{
 			name: "valid direct flight",
-			flight: entity.AirAsiaFlight{
+			flight: AirAsiaFlight{
 				FlightCode:   "QZ-100",
 				Airline:      "AirAsia",
 				FromAirport:  "CGK",
@@ -65,7 +64,7 @@ func TestNormalizeSingle(t *testing.T) {
 		},
 		{
 			name: "valid connecting flight with stops array",
-			flight: entity.AirAsiaFlight{
+			flight: AirAsiaFlight{
 				FlightCode:   "QZ-200",
 				Airline:      "AirAsia",
 				FromAirport:  "CGK",
@@ -76,14 +75,14 @@ func TestNormalizeSingle(t *testing.T) {
 				PriceIDR:     1200000,
 				CabinClass:   "Business",
 				DirectFlight: false,
-				Stops:        []entity.AirAsiaStop{{Airport: "KUL"}},
+				Stops:        []AirAsiaStop{{Airport: "KUL"}},
 			},
 			expectOK:    true,
 			expectStops: 1,
 		},
 		{
 			name: "connecting flight without stops array",
-			flight: entity.AirAsiaFlight{
+			flight: AirAsiaFlight{
 				FlightCode:   "QZ-300",
 				Airline:      "AirAsia",
 				FromAirport:  "CGK",
@@ -99,7 +98,7 @@ func TestNormalizeSingle(t *testing.T) {
 		},
 		{
 			name: "invalid departure time",
-			flight: entity.AirAsiaFlight{
+			flight: AirAsiaFlight{
 				FlightCode:  "QZ-400",
 				DepartTime:  "invalid-time",
 				ArriveTime:  "2025-12-15T10:00:00+07:00",
@@ -108,7 +107,7 @@ func TestNormalizeSingle(t *testing.T) {
 		},
 		{
 			name: "invalid arrival time",
-			flight: entity.AirAsiaFlight{
+			flight: AirAsiaFlight{
 				FlightCode:  "QZ-500",
 				DepartTime:  "2025-12-15T10:00:00+07:00",
 				ArriveTime:  "invalid-time",
@@ -217,7 +216,7 @@ func TestDirectFlightToStops(t *testing.T) {
 	tests := []struct {
 		name     string
 		isDirect bool
-		stops    []entity.AirAsiaStop
+		stops    []AirAsiaStop
 		expected int
 	}{
 		{
@@ -229,7 +228,7 @@ func TestDirectFlightToStops(t *testing.T) {
 		{
 			name:     "connecting with stops array",
 			isDirect: false,
-			stops:    []entity.AirAsiaStop{{}, {}},
+			stops:    []AirAsiaStop{{}, {}},
 			expected: 2,
 		},
 		{
@@ -269,7 +268,7 @@ func TestParseBaggageNote(t *testing.T) {
 }
 
 func TestGenerateFlightID(t *testing.T) {
-	flight := entity.AirAsiaFlight{
+	flight := AirAsiaFlight{
 		FlightCode:  "QZ-123",
 		FromAirport: "CGK",
 		ToAirport:   "DPS",
@@ -280,7 +279,7 @@ func TestGenerateFlightID(t *testing.T) {
 }
 
 func TestNormalizeWithInvalidFlights(t *testing.T) {
-	flights := []entity.AirAsiaFlight{
+	flights := []AirAsiaFlight{
 		{
 			FlightCode: "QZ-VALID",
 			Airline:    "AirAsia",
@@ -308,7 +307,7 @@ func TestNormalizeWithInvalidFlights(t *testing.T) {
 
 func TestNormalizeWithValidationFailure(t *testing.T) {
 	// Flight where arrival is before departure (validation will fail)
-	flights := []entity.AirAsiaFlight{
+	flights := []AirAsiaFlight{
 		{
 			FlightCode:  "QZ-BAD",
 			Airline:     "AirAsia",
@@ -329,11 +328,11 @@ func TestNormalizeWithValidationFailure(t *testing.T) {
 }
 
 func BenchmarkNormalize(b *testing.B) {
-	flights := make([]entity.AirAsiaFlight, 100)
+	flights := make([]AirAsiaFlight, 100)
 	baseTime := time.Now()
 	
 	for i := range flights {
-		flights[i] = entity.AirAsiaFlight{
+		flights[i] = AirAsiaFlight{
 			FlightCode:   "QZ-" + string(rune('0'+i%10)),
 			Airline:      "AirAsia",
 			FromAirport:  "CGK",
