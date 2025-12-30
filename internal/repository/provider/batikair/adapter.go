@@ -26,19 +26,10 @@ type Adapter struct {
 
 // NewAdapter creates a new Batik Air adapter.
 // The mockDataPath parameter specifies the path to the mock JSON data file.
-func NewAdapter(mockDataPath string) *Adapter {
+func NewAdapter(mockDataPath string, skipSimulation bool) *Adapter {
 	return &Adapter{
 		mockDataPath:   mockDataPath,
-		skipSimulation: true, // Default to skipping simulation for tests
-	}
-}
-
-// NewAdapterWithSimulation creates a new Batik Air adapter with real-world simulation enabled.
-// Use this for production to simulate realistic API behavior.
-func NewAdapterWithSimulation(mockDataPath string) *Adapter {
-	return &Adapter{
-		mockDataPath:   mockDataPath,
-		skipSimulation: false,
+		skipSimulation: skipSimulation,
 	}
 }
 

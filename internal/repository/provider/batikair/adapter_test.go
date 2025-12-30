@@ -13,19 +13,13 @@ import (
 )
 
 func TestNewAdapter(t *testing.T) {
-	adapter := NewAdapter("test/path.json")
+	adapter := NewAdapter("test/path.json", true)
 	assert.NotNil(t, adapter)
 	assert.True(t, adapter.skipSimulation)
 }
 
-func TestNewAdapterWithSimulation(t *testing.T) {
-	adapter := NewAdapterWithSimulation("test/path.json")
-	assert.NotNil(t, adapter)
-	assert.False(t, adapter.skipSimulation)
-}
-
 func TestAdapterName(t *testing.T) {
-	adapter := NewAdapter("")
+	adapter := NewAdapter("", true)
 	assert.Equal(t, ProviderName, adapter.Name())
 	assert.Equal(t, "batik_air", adapter.Name())
 }
@@ -37,7 +31,7 @@ func TestAdapterSearch(t *testing.T) {
 		t.Skip("Mock data file not found")
 	}
 
-	adapter := NewAdapter(mockDataPath)
+	adapter := NewAdapter(mockDataPath, true)
 	ctx := context.Background()
 
 	flights, err := adapter.Search(ctx, domain.SearchCriteria{})
@@ -47,7 +41,7 @@ func TestAdapterSearch(t *testing.T) {
 }
 
 func TestAdapterSearchWithInvalidPath(t *testing.T) {
-	adapter := NewAdapter("nonexistent.json")
+	adapter := NewAdapter("nonexistent.json", true)
 	ctx := context.Background()
 
 	_, err := adapter.Search(ctx, domain.SearchCriteria{})
@@ -67,7 +61,7 @@ func TestAdapterSearchWithInvalidJSON(t *testing.T) {
 	require.NoError(t, err)
 	tmpFile.Close()
 
-	adapter := NewAdapter(tmpFile.Name())
+	adapter := NewAdapter(tmpFile.Name(), true)
 	_, err = adapter.Search(context.Background(), domain.SearchCriteria{})
 
 	assert.Error(t, err)
@@ -82,7 +76,7 @@ func TestAdapterSearchWithEmptyResults(t *testing.T) {
 	require.NoError(t, err)
 	tmpFile.Close()
 
-	adapter := NewAdapter(tmpFile.Name())
+	adapter := NewAdapter(tmpFile.Name(), true)
 	flights, err := adapter.Search(context.Background(), domain.SearchCriteria{})
 
 	assert.NoError(t, err)

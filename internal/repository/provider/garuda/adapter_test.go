@@ -13,20 +13,14 @@ import (
 )
 
 func TestNewAdapter(t *testing.T) {
-	adapter := NewAdapter("test/path.json")
+	adapter := NewAdapter("test/path.json", true)
 	assert.NotNil(t, adapter)
 	assert.Equal(t, "test/path.json", adapter.mockDataPath)
 	assert.True(t, adapter.skipSimulation)
 }
 
-func TestNewAdapterWithSimulation(t *testing.T) {
-	adapter := NewAdapterWithSimulation("test/path.json")
-	assert.NotNil(t, adapter)
-	assert.False(t, adapter.skipSimulation)
-}
-
 func TestAdapterName(t *testing.T) {
-	adapter := NewAdapter("")
+	adapter := NewAdapter("", true)
 	assert.Equal(t, ProviderName, adapter.Name())
 	assert.Equal(t, "garuda_indonesia", adapter.Name())
 }
@@ -62,7 +56,7 @@ func TestAdapterSearch(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			adapter := NewAdapter(mockDataPath)
+			adapter := NewAdapter(mockDataPath, true)
 			ctx := context.Background()
 
 			flights, err := adapter.Search(ctx, tt.criteria)
@@ -78,7 +72,7 @@ func TestAdapterSearch(t *testing.T) {
 }
 
 func TestAdapterSearchWithInvalidPath(t *testing.T) {
-	adapter := NewAdapter("nonexistent/path.json")
+	adapter := NewAdapter("nonexistent/path.json", true)
 	ctx := context.Background()
 
 	_, err := adapter.Search(ctx, domain.SearchCriteria{})
@@ -98,7 +92,7 @@ func TestAdapterSearchWithInvalidJSON(t *testing.T) {
 	require.NoError(t, err)
 	tmpFile.Close()
 
-	adapter := NewAdapter(tmpFile.Name())
+	adapter := NewAdapter(tmpFile.Name(), true)
 	ctx := context.Background()
 
 	_, err = adapter.Search(ctx, domain.SearchCriteria{})
@@ -110,7 +104,7 @@ func TestAdapterSearchWithInvalidJSON(t *testing.T) {
 }
 
 func TestAdapterSearchWithContextCancellation(t *testing.T) {
-	adapter := NewAdapter("test.json")
+	adapter := NewAdapter("test.json", true)
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
 
@@ -128,7 +122,7 @@ func TestAdapterSearchWithEmptyFlights(t *testing.T) {
 	require.NoError(t, err)
 	tmpFile.Close()
 
-	adapter := NewAdapter(tmpFile.Name())
+	adapter := NewAdapter(tmpFile.Name(), true)
 	ctx := context.Background()
 
 	flights, err := adapter.Search(ctx, domain.SearchCriteria{})
