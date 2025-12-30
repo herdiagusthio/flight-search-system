@@ -53,16 +53,13 @@ func (a *Adapter) Name() string {
 // Simulates real-world conditions: Slower response (200-400ms delay).
 // Implements domain.FlightProvider.
 func (a *Adapter) Search(ctx context.Context, criteria domain.SearchCriteria) ([]domain.Flight, error) {
-	// Only simulate if not in test mode
 	if !a.skipSimulation {
-		// Simulate network latency: 200-400ms
 		delay := time.Duration(200+rand.Intn(201)) * time.Millisecond
 		timer := time.NewTimer(delay)
 		defer timer.Stop()
 
 		select {
 		case <-timer.C:
-			// Continue after delay
 		case <-ctx.Done():
 			return nil, &domain.ProviderError{
 				Provider:  ProviderName,
@@ -72,7 +69,6 @@ func (a *Adapter) Search(ctx context.Context, criteria domain.SearchCriteria) ([
 		}
 	}
 
-	// Check context cancellation
 	select {
 	case <-ctx.Done():
 		return nil, &domain.ProviderError{
@@ -83,68 +79,51 @@ func (a *Adapter) Search(ctx context.Context, criteria domain.SearchCriteria) ([
 	default:
 	}
 
-	// Read mock data file
 	data, err := os.ReadFile(a.mockDataPath)
 	if err != nil {
 		return nil, &domain.ProviderError{
 			Provider:  ProviderName,
 			Err:       fmt.Errorf("failed to read mock data: %w", err),
-			Retryable: true, // File read errors might be temporary
+			Retryable: true,
 		}
 	}
 
-	// Parse JSON
 	var response entity.BatikAirResponse
 	if err := json.Unmarshal(data, &response); err != nil {
 		return nil, &domain.ProviderError{
 			Provider:  ProviderName,
 			Err:       fmt.Errorf("failed to parse JSON: %w", err),
-			Retryable: false, // Parse errors are not retryable
+			Retryable: false,
 		}
 	}
 
-	// Check for empty flights array
 	if len(response.Results) == 0 {
 		return []domain.Flight{}, nil
 	}
 
-	// Normalize flights to domain model
 	flights := normalize(response.Results)
-
-	// Filter flights based on criteria
-	filtered := filterFlights(flights, criteria)
-
-	return filtered, nil
+	return filterFlights(flights, criteria), nil
 }
 
-// filterFlights filters normalized flights based on the search criteria.
 func filterFlights(flights []domain.Flight, criteria domain.SearchCriteria) []domain.Flight {
 	result := make([]domain.Flight, 0, len(flights))
 
 	for _, f := range flights {
-		// Filter by origin if specified
 		if criteria.Origin != "" && f.Departure.AirportCode != criteria.Origin {
 			continue
 		}
-
-		// Filter by destination if specified
 		if criteria.Destination != "" && f.Arrival.AirportCode != criteria.Destination {
 			continue
 		}
-
-		// Filter by departure date if specified
 		if criteria.DepartureDate != "" {
 			flightDate := f.Departure.DateTime.Format("2006-01-02")
 			if flightDate != criteria.DepartureDate {
 				continue
 			}
 		}
-
-		// Filter by class if specified
 		if criteria.Class != "" && f.Class != criteria.Class {
 			continue
 		}
-
 		result = append(result, f)
 	}
 

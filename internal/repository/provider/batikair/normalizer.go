@@ -9,12 +9,11 @@ import (
 
 	"github.com/herdiagusthio/flight-search-system/domain"
 	"github.com/herdiagusthio/flight-search-system/internal/entity"
+	"github.com/rs/zerolog/log"
 )
 
-// durationRegex matches duration strings like "2h 15m", "1h", "45m"
 var durationRegex = regexp.MustCompile(`(?:(\d+)h)?\s*(?:(\d+)m)?`)
 
-// normalize converts a slice of Batik Air flights to domain Flight entities.
 func normalize(batikAirFlights []entity.BatikAirFlight) []domain.Flight {
 	result := make([]domain.Flight, 0, len(batikAirFlights))
 	skippedCount := 0
@@ -22,18 +21,16 @@ func normalize(batikAirFlights []entity.BatikAirFlight) []domain.Flight {
 	for _, f := range batikAirFlights {
 		normalized, err := normalizeFlight(f)
 		if err != nil {
-			// Skip flights that cannot be normalized
-			// TODO: Add structured logging when logger is available
 			skippedCount++
 			continue
 		}
 
-		// Validate the normalized flight
 		if err := normalized.Validate(); err != nil {
-			// Log validation error with flight details
-			// TODO: Replace with structured logging (WARN level)
-			fmt.Printf("[WARN] [%s] Flight %s validation failed: %v\n",
-				ProviderName, normalized.FlightNumber, err)
+			log.Warn().
+				Str("provider", ProviderName).
+				Str("flight_number", normalized.FlightNumber).
+				Err(err).
+				Msg("Flight validation failed")
 			skippedCount++
 			continue
 		}
@@ -41,11 +38,12 @@ func normalize(batikAirFlights []entity.BatikAirFlight) []domain.Flight {
 		result = append(result, normalized)
 	}
 
-	// Log summary if any flights were skipped
 	if skippedCount > 0 {
-		// TODO: Replace with structured logging (INFO level)
-		fmt.Printf("[INFO] [%s] Skipped %d invalid flights out of %d total\n",
-			ProviderName, skippedCount, len(batikAirFlights))
+		log.Info().
+			Str("provider", ProviderName).
+			Int("skipped", skippedCount).
+			Int("total", len(batikAirFlights)).
+			Msg("Skipped invalid flights during normalization")
 	}
 
 	return result

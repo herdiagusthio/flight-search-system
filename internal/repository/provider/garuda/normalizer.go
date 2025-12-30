@@ -7,9 +7,9 @@ import (
 
 	"github.com/herdiagusthio/flight-search-system/domain"
 	"github.com/herdiagusthio/flight-search-system/internal/entity"
+	"github.com/rs/zerolog/log"
 )
 
-// normalize converts a slice of Garuda flights to domain Flight entities.
 func normalize(garudaFlights []entity.GarudaFlight) []domain.Flight {
 	result := make([]domain.Flight, 0, len(garudaFlights))
 	skippedCount := 0
@@ -17,18 +17,16 @@ func normalize(garudaFlights []entity.GarudaFlight) []domain.Flight {
 	for _, f := range garudaFlights {
 		normalized, err := normalizeFlight(f)
 		if err != nil {
-			// Skip flights that cannot be normalized
-			// TODO: Add structured logging when logger is available
 			skippedCount++
 			continue
 		}
 
-		// Validate the normalized flight
 		if err := normalized.Validate(); err != nil {
-			// Log validation error with flight details
-			// TODO: Replace with structured logging (WARN level)
-			fmt.Printf("[WARN] [%s] Flight %s validation failed: %v\n",
-				ProviderName, normalized.FlightNumber, err)
+			log.Warn().
+				Str("provider", ProviderName).
+				Str("flight_number", normalized.FlightNumber).
+				Err(err).
+				Msg("Flight validation failed")
 			skippedCount++
 			continue
 		}
@@ -36,11 +34,12 @@ func normalize(garudaFlights []entity.GarudaFlight) []domain.Flight {
 		result = append(result, normalized)
 	}
 
-	// Log summary if any flights were skipped
 	if skippedCount > 0 {
-		// TODO: Replace with structured logging (INFO level)
-		fmt.Printf("[INFO] [%s] Skipped %d invalid flights out of %d total\n",
-			ProviderName, skippedCount, len(garudaFlights))
+		log.Info().
+			Str("provider", ProviderName).
+			Int("skipped", skippedCount).
+			Int("total", len(garudaFlights)).
+			Msg("Skipped invalid flights during normalization")
 	}
 
 	return result
