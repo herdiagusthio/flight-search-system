@@ -37,7 +37,7 @@ import (
 	"github.com/herdiagusthio/flight-search-system/domain"
 	"github.com/herdiagusthio/flight-search-system/internal/config"
 	"github.com/herdiagusthio/flight-search-system/internal/handler/flight"
-	"github.com/herdiagusthio/flight-search-system/internal/handler/response"
+	"github.com/herdiagusthio/flight-search-system/internal/handler/httputil"
 	"github.com/herdiagusthio/flight-search-system/internal/repository/provider/airasia"
 	"github.com/herdiagusthio/flight-search-system/internal/repository/provider/batikair"
 	"github.com/herdiagusthio/flight-search-system/internal/repository/provider/garuda"
@@ -132,7 +132,7 @@ func SetupRouter(e *echo.Echo, cfg *config.Config) {
 	
 	// Health check endpoint at root level
 	e.GET("/health", func(c echo.Context) error {
-		return response.HealthCheck(c)
+		return httputil.HealthCheck(c)
 	})
 
 	// Initialize dependencies

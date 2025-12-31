@@ -135,10 +135,3 @@ func validate(cfg *Config) error {
 	return nil
 }
 
-func (c *Config) isDevelopment() bool {
-	return c.App.Env == "development"
-}
-
-func (c *Config) isProduction() bool {
-	return c.App.Env == "production"
-}

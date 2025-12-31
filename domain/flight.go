@@ -2,6 +2,7 @@ package domain
 
 import (
 	"fmt"
+	"strconv"
 	"time"
 )
 
@@ -83,32 +84,20 @@ func NewDurationInfo(totalMinutes int) DurationInfo {
 
 // formatDuration formats hours and minutes as "Xh Ym".
 func formatDuration(hours, mins int) string {
-	return intToString(hours) + "h " + intToString(mins) + "m"
+	return strconv.Itoa(hours) + "h " + strconv.Itoa(mins) + "m"
 }
 
 // formatHoursOnly formats hours as "Xh".
 func formatHoursOnly(hours int) string {
-	return intToString(hours) + "h"
+	return strconv.Itoa(hours) + "h"
 }
 
 // formatMinutesOnly formats minutes as "Xm".
 func formatMinutesOnly(mins int) string {
-	return intToString(mins) + "m"
+	return strconv.Itoa(mins) + "m"
 }
 
-// intToString converts an integer to a string without importing strconv.
-func intToString(n int) string {
-	if n == 0 {
-		return "0"
-	}
 
-	var digits []byte
-	for n > 0 {
-		digits = append([]byte{byte('0' + n%10)}, digits...)
-		n /= 10
-	}
-	return string(digits)
-}
 
 // Validate checks if the flight data is valid and consistent.
 // It returns an error if:

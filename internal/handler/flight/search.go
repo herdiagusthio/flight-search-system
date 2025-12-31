@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/herdiagusthio/flight-search-system/domain"
-	"github.com/herdiagusthio/flight-search-system/internal/handler/response"
+	"github.com/herdiagusthio/flight-search-system/internal/handler/httputil"
 	"github.com/herdiagusthio/flight-search-system/internal/usecase"
 	"github.com/labstack/echo/v4"
 	"github.com/rs/zerolog"
@@ -35,10 +35,10 @@ func NewFlightHandler(searchUseCase usecase.FlightSearchUseCase, logger *zerolog
 // @Produce		json
 // @Param		request	body		SearchRequest	true	"Flight search parameters"
 // @Success		200		{object}	SearchResponse	"Successful flight search with results"
-// @Failure		400		{object}	response.ErrorDetail	"Invalid request body or validation error"
-// @Failure		504		{object}	response.ErrorDetail	"Gateway timeout - search took too long"
-// @Failure		503		{object}	response.ErrorDetail	"Service unavailable - all providers failed"
-// @Failure		500		{object}	response.ErrorDetail	"Internal server error"
+// @Failure		400		{object}	httputil.ErrorDetail	"Invalid request body or validation error"
+// @Failure		504		{object}	httputil.ErrorDetail	"Gateway timeout - search took too long"
+// @Failure		503		{object}	httputil.ErrorDetail	"Service unavailable - all providers failed"
+// @Failure		500		{object}	httputil.ErrorDetail	"Internal server error"
 // @Router		/api/v1/flights/search [post]
 // It parses the request, validates input, calls the use case, and returns the response.
 func (h *FlightHandler) HandleSearch(c echo.Context) error {
@@ -52,7 +52,7 @@ func (h *FlightHandler) HandleSearch(c echo.Context) error {
 			Err(err).
 			Str("method", "HandleSearch").
 			Msg("Failed to parse request body")
-		return response.InvalidRequest(c)
+		return httputil.InvalidRequest(c)
 	}
 
 	// Normalize request (uppercase airport codes, lowercase options)
@@ -65,7 +65,7 @@ func (h *FlightHandler) HandleSearch(c echo.Context) error {
 			Str("method", "HandleSearch").
 			Interface("request", req).
 			Msg("Request validation failed")
-		return response.ValidationErrorWithMessage(c, err.Error())
+		return httputil.ValidationErrorWithMessage(c, err.Error())
 	}
 
 	// Convert DTO to domain models
@@ -110,7 +110,7 @@ func (h *FlightHandler) HandleSearch(c echo.Context) error {
 		Int64("processing_time_ms", processingTime).
 		Msg("Flight search completed successfully")
 
-	return response.SearchFlights(c, respDTO)
+	return httputil.SearchFlights(c, respDTO)
 }
 
 // handleError processes errors from the use case and returns appropriate HTTP responses.
@@ -124,7 +124,7 @@ func (h *FlightHandler) handleError(c echo.Context, err error, start time.Time) 
 			Str("method", "HandleSearch").
 			Int64("processing_time_ms", processingTime).
 			Msg("Invalid request from domain layer")
-		return response.BadRequest(c, err.Error())
+		return httputil.BadRequest(c, err.Error())
 	}
 
 	if errors.Is(err, context.DeadlineExceeded) {
@@ -133,7 +133,7 @@ func (h *FlightHandler) handleError(c echo.Context, err error, start time.Time) 
 			Str("method", "HandleSearch").
 			Int64("processing_time_ms", processingTime).
 			Msg("Search timeout")
-		return response.GatewayTimeout(c)
+		return httputil.GatewayTimeout(c)
 	}
 
 	if errors.Is(err, domain.ErrProviderUnavailable) || errors.Is(err, domain.ErrAllProvidersFailed) {
@@ -142,7 +142,7 @@ func (h *FlightHandler) handleError(c echo.Context, err error, start time.Time) 
 			Str("method", "HandleSearch").
 			Int64("processing_time_ms", processingTime).
 			Msg("All providers unavailable")
-		return response.ServiceUnavailable(c)
+		return httputil.ServiceUnavailable(c)
 	}
 
 	// Generic error
@@ -151,5 +151,5 @@ func (h *FlightHandler) handleError(c echo.Context, err error, start time.Time) 
 		Str("method", "HandleSearch").
 		Int64("processing_time_ms", processingTime).
 		Msg("Unexpected error during search")
-	return response.InternalError(c)
+	return httputil.InternalError(c)
 }

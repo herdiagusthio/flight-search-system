@@ -170,24 +170,7 @@ func TestFlightValidate(t *testing.T) {
 	}
 }
 
-func TestIntToString(t *testing.T) {
-	tests := []struct {
-		input    int
-		expected string
-	}{
-		{0, "0"},
-		{1, "1"},
-		{10, "10"},
-		{123, "123"},
-		{9999, "9999"},
-	}
 
-	for _, tt := range tests {
-		t.Run(tt.expected, func(t *testing.T) {
-			assert.Equal(t, tt.expected, intToString(tt.input))
-		})
-	}
-}
 
 func TestFormatDuration(t *testing.T) {
 	assert.Equal(t, "2h 30m", formatDuration(2, 30))

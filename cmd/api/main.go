@@ -17,7 +17,7 @@ import (
 )
 
 const (
-	gracefullShutdownTimeout = 10 * time.Second
+	gracefulShutdownTimeout = 10 * time.Second
 )
 
 func main() {
@@ -56,18 +56,18 @@ func main() {
 	}()
 
 	// Wait for shutdown signal
-	gracefullShutdown(e)
+	gracefulShutdown(e)
 }
 
-// gracefullShutdown handles graceful shutdown of the server
-func gracefullShutdown(e *echo.Echo) {
+// gracefulShutdown handles graceful shutdown of the server
+func gracefulShutdown(e *echo.Echo) {
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
 
 	<-quit
 	log.Info().Msg("Shutting down server...")
 
-	ctx, cancel := context.WithTimeout(context.Background(), gracefullShutdownTimeout)
+	ctx, cancel := context.WithTimeout(context.Background(), gracefulShutdownTimeout)
 	defer cancel()
 
 	if err := e.Shutdown(ctx); err != nil {

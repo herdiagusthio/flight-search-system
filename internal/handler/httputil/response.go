@@ -1,4 +1,4 @@
-package response
+package httputil
 
 // Error codes used in API responses.
 const (
@@ -25,4 +25,3 @@ type ErrorDetail struct {
 	Message string            `json:"message" example:"Request validation failed"`         // Human-readable error message
 	Details map[string]string `json:"details,omitempty" example:"field:origin,reason:required"` // Additional error details (optional)
 }
-
