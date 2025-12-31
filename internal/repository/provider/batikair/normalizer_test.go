@@ -37,6 +37,7 @@ func TestNormalize(t *testing.T) {
 	assert.Equal(t, "DPS", result[0].Arrival.AirportCode)
 	assert.Equal(t, 120, result[0].Duration.TotalMinutes)
 	assert.Equal(t, float64(1200000), result[0].Price.Amount)
+	assert.Equal(t, "Rp 1.200.000", result[0].Price.Formatted)
 }
 
 func TestNormalizeFlight(t *testing.T) {
@@ -240,6 +241,7 @@ func TestNormalizeFlightPriceFallback(t *testing.T) {
 	result, err := normalizeFlight(flight)
 	assert.NoError(t, err)
 	assert.Equal(t, float64(900000), result.Price.Amount) // BasePrice + Taxes
+	assert.Equal(t, "Rp 900.000", result.Price.Formatted)
 }
 
 func TestNormalizeWithMultipleFlights(t *testing.T) {

@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/herdiagusthio/flight-search-system/domain"
+	"github.com/herdiagusthio/flight-search-system/pkg/util"
 	"github.com/rs/zerolog/log"
 )
 
@@ -84,6 +85,7 @@ func normalizeSingle(f AirAsiaFlight) (domain.Flight, bool) {
 		Price: domain.PriceInfo{
 			Amount:   f.PriceIDR,
 			Currency: "IDR",
+			Formatted: util.FormatIDR(f.PriceIDR),
 		},
 		Baggage: domain.BaggageInfo{
 			CabinKg:   cabinKg,

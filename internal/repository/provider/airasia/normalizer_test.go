@@ -10,17 +10,17 @@ import (
 func TestNormalize(t *testing.T) {
 	flights := []AirAsiaFlight{
 		{
-			FlightCode:   "QZ-123",
-			Airline:      "AirAsia",
-			FromAirport:  "CGK",
-			ToAirport:    "DPS",
-			DepartTime:   "2025-12-15T06:00:00+07:00",
-			ArriveTime:   "2025-12-15T08:30:00+08:00",
+			FlightCode:    "QZ-123",
+			Airline:       "AirAsia",
+			FromAirport:   "CGK",
+			ToAirport:     "DPS",
+			DepartTime:    "2025-12-15T06:00:00+07:00",
+			ArriveTime:    "2025-12-15T08:30:00+08:00",
 			DurationHours: 2.5,
-			PriceIDR:     750000,
-			CabinClass:   "Economy",
-			DirectFlight: true,
-			BaggageNote:  "7kg cabin",
+			PriceIDR:      750000,
+			CabinClass:    "Economy",
+			DirectFlight:  true,
+			BaggageNote:   "7kg cabin",
 		},
 	}
 
@@ -33,6 +33,7 @@ func TestNormalize(t *testing.T) {
 	assert.Equal(t, 150, result[0].Duration.TotalMinutes)
 	assert.Equal(t, float64(750000), result[0].Price.Amount)
 	assert.Equal(t, "IDR", result[0].Price.Currency)
+	assert.Equal(t, "Rp 750.000", result[0].Price.Formatted)
 	assert.Equal(t, "economy", result[0].Class)
 	assert.Equal(t, 0, result[0].Stops)
 	assert.Equal(t, ProviderName, result[0].Provider)
@@ -48,16 +49,16 @@ func TestNormalizeSingle(t *testing.T) {
 		{
 			name: "valid direct flight",
 			flight: AirAsiaFlight{
-				FlightCode:   "QZ-100",
-				Airline:      "AirAsia",
-				FromAirport:  "CGK",
-				ToAirport:    "DPS",
-				DepartTime:   "2025-12-15T10:00:00+07:00",
-				ArriveTime:   "2025-12-15T12:30:00+08:00",
+				FlightCode:    "QZ-100",
+				Airline:       "AirAsia",
+				FromAirport:   "CGK",
+				ToAirport:     "DPS",
+				DepartTime:    "2025-12-15T10:00:00+07:00",
+				ArriveTime:    "2025-12-15T12:30:00+08:00",
 				DurationHours: 2.5,
-				PriceIDR:     500000,
-				CabinClass:   "Economy",
-				DirectFlight: true,
+				PriceIDR:      500000,
+				CabinClass:    "Economy",
+				DirectFlight:  true,
 			},
 			expectOK:    true,
 			expectStops: 0,
@@ -65,17 +66,17 @@ func TestNormalizeSingle(t *testing.T) {
 		{
 			name: "valid connecting flight with stops array",
 			flight: AirAsiaFlight{
-				FlightCode:   "QZ-200",
-				Airline:      "AirAsia",
-				FromAirport:  "CGK",
-				ToAirport:    "SIN",
-				DepartTime:   "2025-12-15T08:00:00+07:00",
-				ArriveTime:   "2025-12-15T14:00:00+08:00",
+				FlightCode:    "QZ-200",
+				Airline:       "AirAsia",
+				FromAirport:   "CGK",
+				ToAirport:     "SIN",
+				DepartTime:    "2025-12-15T08:00:00+07:00",
+				ArriveTime:    "2025-12-15T14:00:00+08:00",
 				DurationHours: 5.0,
-				PriceIDR:     1200000,
-				CabinClass:   "Business",
-				DirectFlight: false,
-				Stops:        []AirAsiaStop{{Airport: "KUL"}},
+				PriceIDR:      1200000,
+				CabinClass:    "Business",
+				DirectFlight:  false,
+				Stops:         []AirAsiaStop{{Airport: "KUL"}},
 			},
 			expectOK:    true,
 			expectStops: 1,
@@ -83,15 +84,15 @@ func TestNormalizeSingle(t *testing.T) {
 		{
 			name: "connecting flight without stops array",
 			flight: AirAsiaFlight{
-				FlightCode:   "QZ-300",
-				Airline:      "AirAsia",
-				FromAirport:  "CGK",
-				ToAirport:    "BKK",
-				DepartTime:   "2025-12-15T06:00:00+07:00",
-				ArriveTime:   "2025-12-15T12:00:00+07:00",
+				FlightCode:    "QZ-300",
+				Airline:       "AirAsia",
+				FromAirport:   "CGK",
+				ToAirport:     "BKK",
+				DepartTime:    "2025-12-15T06:00:00+07:00",
+				ArriveTime:    "2025-12-15T12:00:00+07:00",
 				DurationHours: 6.0,
-				PriceIDR:     1500000,
-				DirectFlight: false,
+				PriceIDR:      1500000,
+				DirectFlight:  false,
 			},
 			expectOK:    true,
 			expectStops: 1,
@@ -99,18 +100,18 @@ func TestNormalizeSingle(t *testing.T) {
 		{
 			name: "invalid departure time",
 			flight: AirAsiaFlight{
-				FlightCode:  "QZ-400",
-				DepartTime:  "invalid-time",
-				ArriveTime:  "2025-12-15T10:00:00+07:00",
+				FlightCode: "QZ-400",
+				DepartTime: "invalid-time",
+				ArriveTime: "2025-12-15T10:00:00+07:00",
 			},
 			expectOK: false,
 		},
 		{
 			name: "invalid arrival time",
 			flight: AirAsiaFlight{
-				FlightCode:  "QZ-500",
-				DepartTime:  "2025-12-15T10:00:00+07:00",
-				ArriveTime:  "invalid-time",
+				FlightCode: "QZ-500",
+				DepartTime: "2025-12-15T10:00:00+07:00",
+				ArriveTime: "invalid-time",
 			},
 			expectOK: false,
 		},
@@ -248,8 +249,8 @@ func TestDirectFlightToStops(t *testing.T) {
 
 func TestParseBaggageNote(t *testing.T) {
 	tests := []struct {
-		note       string
-		expectCabin int
+		note          string
+		expectCabin   int
 		expectChecked int
 	}{
 		{"Cabin baggage only, checked bags additional fee", 7, 0},
@@ -281,15 +282,15 @@ func TestGenerateFlightID(t *testing.T) {
 func TestNormalizeWithInvalidFlights(t *testing.T) {
 	flights := []AirAsiaFlight{
 		{
-			FlightCode: "QZ-VALID",
-			Airline:    "AirAsia",
-			FromAirport: "CGK",
-			ToAirport:   "DPS",
-			DepartTime:  "2025-12-15T06:00:00+07:00",
-			ArriveTime:  "2025-12-15T08:00:00+08:00",
+			FlightCode:    "QZ-VALID",
+			Airline:       "AirAsia",
+			FromAirport:   "CGK",
+			ToAirport:     "DPS",
+			DepartTime:    "2025-12-15T06:00:00+07:00",
+			ArriveTime:    "2025-12-15T08:00:00+08:00",
 			DurationHours: 2.0,
-			PriceIDR:    500000,
-			DirectFlight: true,
+			PriceIDR:      500000,
+			DirectFlight:  true,
 		},
 		{
 			FlightCode: "QZ-INVALID",
@@ -309,15 +310,15 @@ func TestNormalizeWithValidationFailure(t *testing.T) {
 	// Flight where arrival is before departure (validation will fail)
 	flights := []AirAsiaFlight{
 		{
-			FlightCode:  "QZ-BAD",
-			Airline:     "AirAsia",
-			FromAirport: "CGK",
-			ToAirport:   "DPS",
-			DepartTime:  "2025-12-15T10:00:00+07:00",
-			ArriveTime:  "2025-12-15T08:00:00+07:00", // Before departure
+			FlightCode:    "QZ-BAD",
+			Airline:       "AirAsia",
+			FromAirport:   "CGK",
+			ToAirport:     "DPS",
+			DepartTime:    "2025-12-15T10:00:00+07:00",
+			ArriveTime:    "2025-12-15T08:00:00+07:00", // Before departure
 			DurationHours: 2.0,
-			PriceIDR:    500000,
-			DirectFlight: true,
+			PriceIDR:      500000,
+			DirectFlight:  true,
 		},
 	}
 
@@ -330,18 +331,18 @@ func TestNormalizeWithValidationFailure(t *testing.T) {
 func BenchmarkNormalize(b *testing.B) {
 	flights := make([]AirAsiaFlight, 100)
 	baseTime := time.Now()
-	
+
 	for i := range flights {
 		flights[i] = AirAsiaFlight{
-			FlightCode:   "QZ-" + string(rune('0'+i%10)),
-			Airline:      "AirAsia",
-			FromAirport:  "CGK",
-			ToAirport:    "DPS",
-			DepartTime:   baseTime.Format(time.RFC3339),
-			ArriveTime:   baseTime.Add(2 * time.Hour).Format(time.RFC3339),
+			FlightCode:    "QZ-" + string(rune('0'+i%10)),
+			Airline:       "AirAsia",
+			FromAirport:   "CGK",
+			ToAirport:     "DPS",
+			DepartTime:    baseTime.Format(time.RFC3339),
+			ArriveTime:    baseTime.Add(2 * time.Hour).Format(time.RFC3339),
 			DurationHours: 2.0,
-			PriceIDR:     500000,
-			DirectFlight: true,
+			PriceIDR:      500000,
+			DirectFlight:  true,
 		}
 	}
 

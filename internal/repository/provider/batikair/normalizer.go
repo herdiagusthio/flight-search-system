@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/herdiagusthio/flight-search-system/domain"
+	"github.com/herdiagusthio/flight-search-system/pkg/util"
 	"github.com/rs/zerolog/log"
 )
 
@@ -99,6 +100,7 @@ func normalizeFlight(f BatikAirFlight) (domain.Flight, error) {
 		Price: domain.PriceInfo{
 			Amount:   totalPrice,
 			Currency: f.Fare.CurrencyCode,
+			Formatted: util.FormatIDR(totalPrice),
 		},
 		Baggage: domain.BaggageInfo{
 			CabinKg:   cabinKg,

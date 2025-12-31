@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/herdiagusthio/flight-search-system/domain"
+	"github.com/herdiagusthio/flight-search-system/pkg/util"
 	"github.com/rs/zerolog/log"
 )
 
@@ -95,6 +96,7 @@ func normalizeFlight(f LionAirFlight) (domain.Flight, error) {
 		Price: domain.PriceInfo{
 			Amount:   f.Pricing.Total,
 			Currency: f.Pricing.Currency,
+			Formatted: util.FormatIDR(f.Pricing.Total),
 		},
 		Baggage: domain.BaggageInfo{
 			CabinKg:   cabinKg,

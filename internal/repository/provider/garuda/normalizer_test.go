@@ -44,6 +44,8 @@ func TestNormalize(t *testing.T) {
 	assert.Equal(t, "CGK", result[0].Departure.AirportCode)
 	assert.Equal(t, "DPS", result[0].Arrival.AirportCode)
 	assert.Equal(t, 120, result[0].Duration.TotalMinutes)
+	assert.Equal(t, float64(1500000), result[0].Price.Amount)
+	assert.Equal(t, "Rp 1.500.000", result[0].Price.Formatted)
 	assert.Equal(t, "economy", result[0].Class)
 }
 

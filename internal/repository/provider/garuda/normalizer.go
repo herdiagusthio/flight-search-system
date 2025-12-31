@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/herdiagusthio/flight-search-system/domain"
+	"github.com/herdiagusthio/flight-search-system/pkg/util"
 	"github.com/rs/zerolog/log"
 )
 
@@ -85,8 +86,9 @@ func normalizeFlight(f GarudaFlight) (domain.Flight, error) {
 		},
 		Duration: domain.NewDurationInfo(f.DurationMinutes),
 		Price: domain.PriceInfo{
-			Amount:   f.Price.Amount,
-			Currency: f.Price.Currency,
+			Amount:    f.Price.Amount,
+			Currency:  f.Price.Currency,
+			Formatted: util.FormatIDR(f.Price.Amount),
 		},
 		Baggage: domain.BaggageInfo{
 			CabinKg:   f.Baggage.CarryOn * DefaultCabinBaggageKg,
