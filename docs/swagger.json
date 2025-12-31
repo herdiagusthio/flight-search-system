@@ -1,0 +1,596 @@
+{
+    "consumes": [
+        "application/json"
+    ],
+    "produces": [
+        "application/json"
+    ],
+    "schemes": [
+        "http",
+        "https"
+    ],
+    "swagger": "2.0",
+    "info": {
+        "description": "RESTful API for searching and aggregating flight information from multiple airline providers\nThis API aggregates flight data from Indonesian airlines including Garuda Indonesia, Lion Air, Batik Air, and AirAsia",
+        "title": "Flight Search API",
+        "contact": {
+            "name": "Flight Search API Support",
+            "email": "support@flightsearch.example.com"
+        },
+        "license": {
+            "name": "MIT",
+            "url": "https://opensource.org/licenses/MIT"
+        },
+        "version": "1.0"
+    },
+    "host": "localhost:8080",
+    "paths": {
+        "/api/v1/flights/search": {
+            "post": {
+                "description": "Search for available flights from multiple airline providers based on search criteria\nThis endpoint aggregates flight data from Garuda Indonesia, Lion Air, Batik Air, and AirAsia",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "flights"
+                ],
+                "summary": "Search for flights",
+                "parameters": [
+                    {
+                        "description": "Flight search parameters",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_handler_flight.SearchRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful flight search with results",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handler_flight.SearchResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request body or validation error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_herdiagusthio_flight-search-system_internal_handler_response.ErrorDetail"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_herdiagusthio_flight-search-system_internal_handler_response.ErrorDetail"
+                        }
+                    },
+                    "503": {
+                        "description": "Service unavailable - all providers failed",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_herdiagusthio_flight-search-system_internal_handler_response.ErrorDetail"
+                        }
+                    },
+                    "504": {
+                        "description": "Gateway timeout - search took too long",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_herdiagusthio_flight-search-system_internal_handler_response.ErrorDetail"
+                        }
+                    }
+                }
+            }
+        },
+        "/health": {
+            "get": {
+                "description": "Check if the API service is running and healthy",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "health"
+                ],
+                "summary": "Health check",
+                "responses": {
+                    "200": {
+                        "description": "Service is healthy",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handler_response.HealthResponse"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "github_com_herdiagusthio_flight-search-system_internal_handler_response.ErrorDetail": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "description": "Error code identifier",
+                    "type": "string",
+                    "example": "validation_error"
+                },
+                "details": {
+                    "description": "Additional error details (optional)",
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "example": {
+                        "field": "origin",
+                        "reason": "required"
+                    }
+                },
+                "message": {
+                    "description": "Human-readable error message",
+                    "type": "string",
+                    "example": "Request validation failed"
+                }
+            }
+        },
+        "internal_handler_flight.AirlineDTO": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "description": "IATA airline code",
+                    "type": "string",
+                    "example": "GA"
+                },
+                "name": {
+                    "description": "Airline full name",
+                    "type": "string",
+                    "example": "Garuda Indonesia"
+                }
+            }
+        },
+        "internal_handler_flight.BaggageDTO": {
+            "type": "object",
+            "properties": {
+                "carry_on": {
+                    "description": "Cabin baggage allowance",
+                    "type": "string",
+                    "example": "7kg cabin"
+                },
+                "checked": {
+                    "description": "Checked baggage allowance",
+                    "type": "string",
+                    "example": "20kg checked"
+                }
+            }
+        },
+        "internal_handler_flight.DurationDTO": {
+            "type": "object",
+            "properties": {
+                "formatted": {
+                    "description": "Human-readable formatted duration",
+                    "type": "string",
+                    "example": "1h 30m"
+                },
+                "total_minutes": {
+                    "description": "Total duration in minutes",
+                    "type": "integer",
+                    "example": 90
+                }
+            }
+        },
+        "internal_handler_flight.DurationRangeDTO": {
+            "type": "object",
+            "properties": {
+                "maxMinutes": {
+                    "description": "Maximum flight duration in minutes (optional)",
+                    "type": "integer",
+                    "minimum": 0,
+                    "example": 300
+                },
+                "minMinutes": {
+                    "description": "Minimum flight duration in minutes (optional)",
+                    "type": "integer",
+                    "minimum": 0,
+                    "example": 60
+                }
+            }
+        },
+        "internal_handler_flight.FilterDTO": {
+            "type": "object",
+            "properties": {
+                "airlines": {
+                    "description": "Filter by airline codes (optional)",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "GA",
+                        "JT"
+                    ]
+                },
+                "arrivalTimeRange": {
+                    "description": "Filter by arrival time range (optional)",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/internal_handler_flight.TimeRangeDTO"
+                        }
+                    ]
+                },
+                "departureTimeRange": {
+                    "description": "Filter by departure time range (optional)",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/internal_handler_flight.TimeRangeDTO"
+                        }
+                    ]
+                },
+                "durationRange": {
+                    "description": "Filter by flight duration range (optional)",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/internal_handler_flight.DurationRangeDTO"
+                        }
+                    ]
+                },
+                "maxPrice": {
+                    "description": "Maximum price in IDR (optional)",
+                    "type": "number",
+                    "minimum": 0,
+                    "example": 5000000
+                },
+                "maxStops": {
+                    "description": "Maximum number of stops (optional)",
+                    "type": "integer",
+                    "minimum": 0,
+                    "example": 1
+                }
+            }
+        },
+        "internal_handler_flight.FlightDTO": {
+            "type": "object",
+            "properties": {
+                "aircraft": {
+                    "description": "Aircraft type (nullable)",
+                    "type": "string",
+                    "example": "Boeing 737"
+                },
+                "airline": {
+                    "description": "Airline information",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/internal_handler_flight.AirlineDTO"
+                        }
+                    ]
+                },
+                "amenities": {
+                    "description": "Available amenities",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "WiFi",
+                        "Meals"
+                    ]
+                },
+                "arrival": {
+                    "description": "Arrival information",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/internal_handler_flight.LocationDTO"
+                        }
+                    ]
+                },
+                "available_seats": {
+                    "description": "Available seats (0 if not available)",
+                    "type": "integer",
+                    "example": 0
+                },
+                "baggage": {
+                    "description": "Baggage allowance",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/internal_handler_flight.BaggageDTO"
+                        }
+                    ]
+                },
+                "cabin_class": {
+                    "description": "Cabin class",
+                    "type": "string",
+                    "example": "economy"
+                },
+                "departure": {
+                    "description": "Departure information",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/internal_handler_flight.LocationDTO"
+                        }
+                    ]
+                },
+                "duration": {
+                    "description": "Flight duration",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/internal_handler_flight.DurationDTO"
+                        }
+                    ]
+                },
+                "flight_number": {
+                    "description": "Flight number",
+                    "type": "string",
+                    "example": "GA-123"
+                },
+                "id": {
+                    "description": "Unique flight identifier",
+                    "type": "string",
+                    "example": "GA-12345"
+                },
+                "price": {
+                    "description": "Price information",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/internal_handler_flight.PriceDTO"
+                        }
+                    ]
+                },
+                "provider": {
+                    "description": "Provider/airline name",
+                    "type": "string",
+                    "example": "Garuda Indonesia"
+                },
+                "stops": {
+                    "description": "Number of stops (0 for direct)",
+                    "type": "integer",
+                    "example": 0
+                }
+            }
+        },
+        "internal_handler_flight.LocationDTO": {
+            "type": "object",
+            "properties": {
+                "airport": {
+                    "description": "Airport IATA code",
+                    "type": "string",
+                    "example": "CGK"
+                },
+                "city": {
+                    "description": "City name",
+                    "type": "string",
+                    "example": "Jakarta"
+                },
+                "datetime": {
+                    "description": "ISO 8601 datetime",
+                    "type": "string",
+                    "example": "2025-01-15T08:00:00Z"
+                },
+                "timestamp": {
+                    "description": "Unix timestamp",
+                    "type": "integer",
+                    "example": 1736928000
+                }
+            }
+        },
+        "internal_handler_flight.Metadata": {
+            "type": "object",
+            "properties": {
+                "cache_hit": {
+                    "description": "Whether result was served from cache",
+                    "type": "boolean",
+                    "example": false
+                },
+                "providers_failed": {
+                    "description": "Number of providers that failed",
+                    "type": "integer",
+                    "example": 0
+                },
+                "providers_queried": {
+                    "description": "Number of providers queried",
+                    "type": "integer",
+                    "example": 4
+                },
+                "providers_succeeded": {
+                    "description": "Number of providers that responded successfully",
+                    "type": "integer",
+                    "example": 4
+                },
+                "search_time_ms": {
+                    "description": "Total search execution time in milliseconds",
+                    "type": "integer",
+                    "example": 1234
+                },
+                "total_results": {
+                    "description": "Total number of flights found",
+                    "type": "integer",
+                    "example": 15
+                }
+            }
+        },
+        "internal_handler_flight.PriceDTO": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "description": "Price amount",
+                    "type": "number",
+                    "example": 1500000
+                },
+                "currency": {
+                    "description": "Currency code (ISO 4217)",
+                    "type": "string",
+                    "example": "IDR"
+                }
+            }
+        },
+        "internal_handler_flight.SearchCriteria": {
+            "type": "object",
+            "properties": {
+                "cabin_class": {
+                    "description": "Cabin class",
+                    "type": "string",
+                    "example": "economy"
+                },
+                "departure_date": {
+                    "description": "Departure date",
+                    "type": "string",
+                    "example": "2025-01-15"
+                },
+                "destination": {
+                    "description": "Destination airport IATA code",
+                    "type": "string",
+                    "example": "DPS"
+                },
+                "origin": {
+                    "description": "Origin airport IATA code",
+                    "type": "string",
+                    "example": "CGK"
+                },
+                "passengers": {
+                    "description": "Number of passengers",
+                    "type": "integer",
+                    "example": 2
+                }
+            }
+        },
+        "internal_handler_flight.SearchRequest": {
+            "type": "object",
+            "required": [
+                "departureDate",
+                "destination",
+                "origin",
+                "passengers"
+            ],
+            "properties": {
+                "class": {
+                    "description": "Cabin class preference (optional)",
+                    "type": "string",
+                    "enum": [
+                        "economy",
+                        "business",
+                        "first"
+                    ],
+                    "example": "economy"
+                },
+                "departureDate": {
+                    "description": "Departure date in YYYY-MM-DD format",
+                    "type": "string",
+                    "format": "date",
+                    "example": "2025-01-15"
+                },
+                "destination": {
+                    "description": "Destination airport IATA code (3 letters)",
+                    "type": "string",
+                    "format": "IATA code",
+                    "example": "DPS"
+                },
+                "filters": {
+                    "description": "Optional filters for search results",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/internal_handler_flight.FilterDTO"
+                        }
+                    ]
+                },
+                "origin": {
+                    "description": "Origin airport IATA code (3 letters)",
+                    "type": "string",
+                    "format": "IATA code",
+                    "example": "CGK"
+                },
+                "passengers": {
+                    "description": "Number of passengers (1-9)",
+                    "type": "integer",
+                    "maximum": 9,
+                    "minimum": 1,
+                    "example": 2
+                },
+                "sortBy": {
+                    "description": "Sort order for results (optional)",
+                    "type": "string",
+                    "enum": [
+                        "best",
+                        "price",
+                        "duration",
+                        "departure"
+                    ],
+                    "example": "price"
+                }
+            }
+        },
+        "internal_handler_flight.SearchResponse": {
+            "type": "object",
+            "properties": {
+                "flights": {
+                    "description": "List of available flights matching criteria",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/internal_handler_flight.FlightDTO"
+                    }
+                },
+                "metadata": {
+                    "description": "Search execution metadata and statistics",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/internal_handler_flight.Metadata"
+                        }
+                    ]
+                },
+                "search_criteria": {
+                    "description": "Echo of the search criteria submitted",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/internal_handler_flight.SearchCriteria"
+                        }
+                    ]
+                }
+            }
+        },
+        "internal_handler_flight.TimeRangeDTO": {
+            "type": "object",
+            "required": [
+                "end",
+                "start"
+            ],
+            "properties": {
+                "end": {
+                    "description": "End time in HH:MM format (24-hour)",
+                    "type": "string",
+                    "example": "22:00"
+                },
+                "start": {
+                    "description": "Start time in HH:MM format (24-hour)",
+                    "type": "string",
+                    "example": "06:00"
+                }
+            }
+        },
+        "internal_handler_response.HealthResponse": {
+            "type": "object",
+            "properties": {
+                "status": {
+                    "description": "Service health status",
+                    "type": "string",
+                    "example": "healthy"
+                }
+            }
+        }
+    },
+    "securityDefinitions": {
+        "ApiKeyAuth": {
+            "description": "API Key for authentication (optional)",
+            "type": "apiKey",
+            "name": "X-API-Key",
+            "in": "header"
+        }
+    },
+    "tags": [
+        {
+            "description": "Flight search and information operations",
+            "name": "flights"
+        },
+        {
+            "description": "Service health check operations",
+            "name": "health"
+        }
+    ]
+}

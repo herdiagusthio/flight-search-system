@@ -1,0 +1,170 @@
+{
+    "basic_search": {
+        "description": "Basic flight search with minimal parameters",
+        "request": {
+            "origin": "CGK",
+            "destination": "DPS",
+            "departureDate": "2025-01-15",
+            "passengers": 2
+        }
+    },
+    "search_with_class": {
+        "description": "Search with cabin class specification",
+        "request": {
+            "origin": "CGK",
+            "destination": "SUB",
+            "departureDate": "2025-02-01",
+            "passengers": 1,
+            "class": "economy"
+        }
+    },
+    "search_with_price_filter": {
+        "description": "Search with maximum price filter",
+        "request": {
+            "origin": "CGK",
+            "destination": "DPS",
+            "departureDate": "2025-01-20",
+            "passengers": 2,
+            "filters": {
+                "maxPrice": 2000000
+            }
+        }
+    },
+    "search_direct_flights_only": {
+        "description": "Search for direct flights only (no stops)",
+        "request": {
+            "origin": "CGK",
+            "destination": "BDO",
+            "departureDate": "2025-03-10",
+            "passengers": 3,
+            "filters": {
+                "maxStops": 0
+            }
+        }
+    },
+    "search_with_time_range": {
+        "description": "Search with departure time range",
+        "request": {
+            "origin": "CGK",
+            "destination": "SUB",
+            "departureDate": "2025-02-15",
+            "passengers": 1,
+            "filters": {
+                "departureTimeRange": {
+                    "start": "06:00",
+                    "end": "12:00"
+                }
+            }
+        }
+    },
+    "search_with_duration_filter": {
+        "description": "Search with flight duration constraints",
+        "request": {
+            "origin": "CGK",
+            "destination": "DPS",
+            "departureDate": "2025-04-01",
+            "passengers": 2,
+            "filters": {
+                "durationRange": {
+                    "minMinutes": 60,
+                    "maxMinutes": 120
+                }
+            }
+        }
+    },
+    "search_by_airlines": {
+        "description": "Search filtered by specific airlines",
+        "request": {
+            "origin": "CGK",
+            "destination": "DPS",
+            "departureDate": "2025-01-25",
+            "passengers": 2,
+            "filters": {
+                "airlines": [
+                    "GA",
+                    "ID"
+                ]
+            }
+        }
+    },
+    "search_sorted_by_price": {
+        "description": "Search with results sorted by price (cheapest first)",
+        "request": {
+            "origin": "CGK",
+            "destination": "SUB",
+            "departureDate": "2025-02-10",
+            "passengers": 1,
+            "sortBy": "price"
+        }
+    },
+    "search_sorted_by_duration": {
+        "description": "Search with results sorted by duration (shortest first)",
+        "request": {
+            "origin": "CGK",
+            "destination": "DPS",
+            "departureDate": "2025-03-05",
+            "passengers": 2,
+            "sortBy": "duration"
+        }
+    },
+    "comprehensive_search": {
+        "description": "Comprehensive search with multiple filters and sorting",
+        "request": {
+            "origin": "CGK",
+            "destination": "DPS",
+            "departureDate": "2025-01-30",
+            "passengers": 2,
+            "class": "economy",
+            "sortBy": "price",
+            "filters": {
+                "maxPrice": 3000000,
+                "maxStops": 1,
+                "airlines": [
+                    "GA",
+                    "JT",
+                    "ID"
+                ],
+                "departureTimeRange": {
+                    "start": "06:00",
+                    "end": "18:00"
+                },
+                "arrivalTimeRange": {
+                    "start": "08:00",
+                    "end": "22:00"
+                },
+                "durationRange": {
+                    "minMinutes": 60,
+                    "maxMinutes": 180
+                }
+            }
+        }
+    },
+    "business_class_search": {
+        "description": "Search for business class flights",
+        "request": {
+            "origin": "CGK",
+            "destination": "SIN",
+            "departureDate": "2025-02-20",
+            "passengers": 1,
+            "class": "business",
+            "sortBy": "best"
+        }
+    },
+    "family_travel_search": {
+        "description": "Search for family travel with multiple passengers",
+        "request": {
+            "origin": "CGK",
+            "destination": "DPS",
+            "departureDate": "2025-06-15",
+            "passengers": 4,
+            "class": "economy",
+            "filters": {
+                "maxPrice": 8000000,
+                "departureTimeRange": {
+                    "start": "07:00",
+                    "end": "10:00"
+                }
+            }
+        }
+    }
+}

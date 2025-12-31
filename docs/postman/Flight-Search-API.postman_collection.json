@@ -1,0 +1,505 @@
+{
+    "info": {
+        "name": "Flight Search API",
+        "_postman_id": "flight-search-api-v1",
+        "description": "Collection of endpoints for the Flight Search API. This API aggregates flight data from multiple Indonesian airline providers.",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "variable": [
+        {
+            "key": "baseUrl",
+            "value": "http://localhost:8080",
+            "type": "string"
+        },
+        {
+            "key": "apiVersion",
+            "value": "v1",
+            "type": "string"
+        }
+    ],
+    "item": [
+        {
+            "name": "Health",
+            "item": [
+                {
+                    "name": "Health Check",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/health",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "health"
+                            ]
+                        },
+                        "description": "Check if the API service is running and healthy"
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "Flights",
+            "item": [
+                {
+                    "name": "Basic Search",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"origin\": \"CGK\",\n  \"destination\": \"DPS\",\n  \"departureDate\": \"2025-01-15\",\n  \"passengers\": 2\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/{{apiVersion}}/flights/search",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "{{apiVersion}}",
+                                "flights",
+                                "search"
+                            ]
+                        },
+                        "description": "Basic flight search with minimal required parameters"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Search with Cabin Class",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"origin\": \"CGK\",\n  \"destination\": \"SUB\",\n  \"departureDate\": \"2025-02-01\",\n  \"passengers\": 1,\n  \"class\": \"economy\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/{{apiVersion}}/flights/search",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "{{apiVersion}}",
+                                "flights",
+                                "search"
+                            ]
+                        },
+                        "description": "Search with specific cabin class"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Search with Price Filter",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"origin\": \"CGK\",\n  \"destination\": \"DPS\",\n  \"departureDate\": \"2025-01-20\",\n  \"passengers\": 2,\n  \"filters\": {\n    \"maxPrice\": 2000000\n  }\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/{{apiVersion}}/flights/search",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "{{apiVersion}}",
+                                "flights",
+                                "search"
+                            ]
+                        },
+                        "description": "Search with maximum price filter"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Direct Flights Only",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"origin\": \"CGK\",\n  \"destination\": \"BDO\",\n  \"departureDate\": \"2025-03-10\",\n  \"passengers\": 3,\n  \"filters\": {\n    \"maxStops\": 0\n  }\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/{{apiVersion}}/flights/search",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "{{apiVersion}}",
+                                "flights",
+                                "search"
+                            ]
+                        },
+                        "description": "Search for non-stop flights only"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Search with Time Range",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"origin\": \"CGK\",\n  \"destination\": \"SUB\",\n  \"departureDate\": \"2025-02-15\",\n  \"passengers\": 1,\n  \"filters\": {\n    \"departureTimeRange\": {\n      \"start\": \"06:00\",\n      \"end\": \"12:00\"\n    }\n  }\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/{{apiVersion}}/flights/search",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "{{apiVersion}}",
+                                "flights",
+                                "search"
+                            ]
+                        },
+                        "description": "Search with departure time constraints"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Search with Duration Filter",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"origin\": \"CGK\",\n  \"destination\": \"DPS\",\n  \"departureDate\": \"2025-04-01\",\n  \"passengers\": 2,\n  \"filters\": {\n    \"durationRange\": {\n      \"minMinutes\": 60,\n      \"maxMinutes\": 120\n    }\n  }\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/{{apiVersion}}/flights/search",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "{{apiVersion}}",
+                                "flights",
+                                "search"
+                            ]
+                        },
+                        "description": "Search with flight duration constraints"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Filter by Airlines",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"origin\": \"CGK\",\n  \"destination\": \"DPS\",\n  \"departureDate\": \"2025-01-25\",\n  \"passengers\": 2,\n  \"filters\": {\n    \"airlines\": [\"GA\", \"ID\"]\n  }\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/{{apiVersion}}/flights/search",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "{{apiVersion}}",
+                                "flights",
+                                "search"
+                            ]
+                        },
+                        "description": "Filter results by specific airline codes"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Sort by Price",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"origin\": \"CGK\",\n  \"destination\": \"SUB\",\n  \"departureDate\": \"2025-02-10\",\n  \"passengers\": 1,\n  \"sortBy\": \"price\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/{{apiVersion}}/flights/search",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "{{apiVersion}}",
+                                "flights",
+                                "search"
+                            ]
+                        },
+                        "description": "Sort results by price (cheapest first)"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Sort by Duration",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"origin\": \"CGK\",\n  \"destination\": \"DPS\",\n  \"departureDate\": \"2025-03-05\",\n  \"passengers\": 2,\n  \"sortBy\": \"duration\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/{{apiVersion}}/flights/search",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "{{apiVersion}}",
+                                "flights",
+                                "search"
+                            ]
+                        },
+                        "description": "Sort results by duration (shortest first)"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Comprehensive Search",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"origin\": \"CGK\",\n  \"destination\": \"DPS\",\n  \"departureDate\": \"2025-01-30\",\n  \"passengers\": 2,\n  \"class\": \"economy\",\n  \"sortBy\": \"price\",\n  \"filters\": {\n    \"maxPrice\": 3000000,\n    \"maxStops\": 1,\n    \"airlines\": [\"GA\", \"JT\", \"ID\"],\n    \"departureTimeRange\": {\n      \"start\": \"06:00\",\n      \"end\": \"18:00\"\n    },\n    \"arrivalTimeRange\": {\n      \"start\": \"08:00\",\n      \"end\": \"22:00\"\n    },\n    \"durationRange\": {\n      \"minMinutes\": 60,\n      \"maxMinutes\": 180\n    }\n  }\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/{{apiVersion}}/flights/search",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "{{apiVersion}}",
+                                "flights",
+                                "search"
+                            ]
+                        },
+                        "description": "Comprehensive search with multiple filters and sorting"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Business Class Search",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"origin\": \"CGK\",\n  \"destination\": \"SIN\",\n  \"departureDate\": \"2025-02-20\",\n  \"passengers\": 1,\n  \"class\": \"business\",\n  \"sortBy\": \"best\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/{{apiVersion}}/flights/search",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "{{apiVersion}}",
+                                "flights",
+                                "search"
+                            ]
+                        },
+                        "description": "Search for business class flights"
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "Error Cases",
+            "item": [
+                {
+                    "name": "Invalid IATA Code",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"origin\": \"JAKARTA\",\n  \"destination\": \"DPS\",\n  \"departureDate\": \"2025-01-15\",\n  \"passengers\": 2\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/{{apiVersion}}/flights/search",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "{{apiVersion}}",
+                                "flights",
+                                "search"
+                            ]
+                        },
+                        "description": "Test validation: Invalid IATA airport code"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Invalid Date Format",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"origin\": \"CGK\",\n  \"destination\": \"DPS\",\n  \"departureDate\": \"15-01-2025\",\n  \"passengers\": 2\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/{{apiVersion}}/flights/search",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "{{apiVersion}}",
+                                "flights",
+                                "search"
+                            ]
+                        },
+                        "description": "Test validation: Invalid date format"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Too Many Passengers",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"origin\": \"CGK\",\n  \"destination\": \"DPS\",\n  \"departureDate\": \"2025-01-15\",\n  \"passengers\": 10\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/{{apiVersion}}/flights/search",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "{{apiVersion}}",
+                                "flights",
+                                "search"
+                            ]
+                        },
+                        "description": "Test validation: Passengers exceeds maximum"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Same Origin and Destination",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"origin\": \"CGK\",\n  \"destination\": \"CGK\",\n  \"departureDate\": \"2025-01-15\",\n  \"passengers\": 2\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/{{apiVersion}}/flights/search",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "{{apiVersion}}",
+                                "flights",
+                                "search"
+                            ]
+                        },
+                        "description": "Test validation: Origin and destination must differ"
+                    },
+                    "response": []
+                }
+            ]
+        }
+    ]
+}

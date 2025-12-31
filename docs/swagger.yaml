@@ -1,0 +1,417 @@
+consumes:
+- application/json
+definitions:
+  github_com_herdiagusthio_flight-search-system_internal_handler_response.ErrorDetail:
+    properties:
+      code:
+        description: Error code identifier
+        example: validation_error
+        type: string
+      details:
+        additionalProperties:
+          type: string
+        description: Additional error details (optional)
+        example:
+          field: origin
+          reason: required
+        type: object
+      message:
+        description: Human-readable error message
+        example: Request validation failed
+        type: string
+    type: object
+  internal_handler_flight.AirlineDTO:
+    properties:
+      code:
+        description: IATA airline code
+        example: GA
+        type: string
+      name:
+        description: Airline full name
+        example: Garuda Indonesia
+        type: string
+    type: object
+  internal_handler_flight.BaggageDTO:
+    properties:
+      carry_on:
+        description: Cabin baggage allowance
+        example: 7kg cabin
+        type: string
+      checked:
+        description: Checked baggage allowance
+        example: 20kg checked
+        type: string
+    type: object
+  internal_handler_flight.DurationDTO:
+    properties:
+      formatted:
+        description: Human-readable formatted duration
+        example: 1h 30m
+        type: string
+      total_minutes:
+        description: Total duration in minutes
+        example: 90
+        type: integer
+    type: object
+  internal_handler_flight.DurationRangeDTO:
+    properties:
+      maxMinutes:
+        description: Maximum flight duration in minutes (optional)
+        example: 300
+        minimum: 0
+        type: integer
+      minMinutes:
+        description: Minimum flight duration in minutes (optional)
+        example: 60
+        minimum: 0
+        type: integer
+    type: object
+  internal_handler_flight.FilterDTO:
+    properties:
+      airlines:
+        description: Filter by airline codes (optional)
+        example:
+        - GA
+        - JT
+        items:
+          type: string
+        type: array
+      arrivalTimeRange:
+        allOf:
+        - $ref: '#/definitions/internal_handler_flight.TimeRangeDTO'
+        description: Filter by arrival time range (optional)
+      departureTimeRange:
+        allOf:
+        - $ref: '#/definitions/internal_handler_flight.TimeRangeDTO'
+        description: Filter by departure time range (optional)
+      durationRange:
+        allOf:
+        - $ref: '#/definitions/internal_handler_flight.DurationRangeDTO'
+        description: Filter by flight duration range (optional)
+      maxPrice:
+        description: Maximum price in IDR (optional)
+        example: 5000000
+        minimum: 0
+        type: number
+      maxStops:
+        description: Maximum number of stops (optional)
+        example: 1
+        minimum: 0
+        type: integer
+    type: object
+  internal_handler_flight.FlightDTO:
+    properties:
+      aircraft:
+        description: Aircraft type (nullable)
+        example: Boeing 737
+        type: string
+      airline:
+        allOf:
+        - $ref: '#/definitions/internal_handler_flight.AirlineDTO'
+        description: Airline information
+      amenities:
+        description: Available amenities
+        example:
+        - WiFi
+        - Meals
+        items:
+          type: string
+        type: array
+      arrival:
+        allOf:
+        - $ref: '#/definitions/internal_handler_flight.LocationDTO'
+        description: Arrival information
+      available_seats:
+        description: Available seats (0 if not available)
+        example: 0
+        type: integer
+      baggage:
+        allOf:
+        - $ref: '#/definitions/internal_handler_flight.BaggageDTO'
+        description: Baggage allowance
+      cabin_class:
+        description: Cabin class
+        example: economy
+        type: string
+      departure:
+        allOf:
+        - $ref: '#/definitions/internal_handler_flight.LocationDTO'
+        description: Departure information
+      duration:
+        allOf:
+        - $ref: '#/definitions/internal_handler_flight.DurationDTO'
+        description: Flight duration
+      flight_number:
+        description: Flight number
+        example: GA-123
+        type: string
+      id:
+        description: Unique flight identifier
+        example: GA-12345
+        type: string
+      price:
+        allOf:
+        - $ref: '#/definitions/internal_handler_flight.PriceDTO'
+        description: Price information
+      provider:
+        description: Provider/airline name
+        example: Garuda Indonesia
+        type: string
+      stops:
+        description: Number of stops (0 for direct)
+        example: 0
+        type: integer
+    type: object
+  internal_handler_flight.LocationDTO:
+    properties:
+      airport:
+        description: Airport IATA code
+        example: CGK
+        type: string
+      city:
+        description: City name
+        example: Jakarta
+        type: string
+      datetime:
+        description: ISO 8601 datetime
+        example: "2025-01-15T08:00:00Z"
+        type: string
+      timestamp:
+        description: Unix timestamp
+        example: 1736928000
+        type: integer
+    type: object
+  internal_handler_flight.Metadata:
+    properties:
+      cache_hit:
+        description: Whether result was served from cache
+        example: false
+        type: boolean
+      providers_failed:
+        description: Number of providers that failed
+        example: 0
+        type: integer
+      providers_queried:
+        description: Number of providers queried
+        example: 4
+        type: integer
+      providers_succeeded:
+        description: Number of providers that responded successfully
+        example: 4
+        type: integer
+      search_time_ms:
+        description: Total search execution time in milliseconds
+        example: 1234
+        type: integer
+      total_results:
+        description: Total number of flights found
+        example: 15
+        type: integer
+    type: object
+  internal_handler_flight.PriceDTO:
+    properties:
+      amount:
+        description: Price amount
+        example: 1500000
+        type: number
+      currency:
+        description: Currency code (ISO 4217)
+        example: IDR
+        type: string
+    type: object
+  internal_handler_flight.SearchCriteria:
+    properties:
+      cabin_class:
+        description: Cabin class
+        example: economy
+        type: string
+      departure_date:
+        description: Departure date
+        example: "2025-01-15"
+        type: string
+      destination:
+        description: Destination airport IATA code
+        example: DPS
+        type: string
+      origin:
+        description: Origin airport IATA code
+        example: CGK
+        type: string
+      passengers:
+        description: Number of passengers
+        example: 2
+        type: integer
+    type: object
+  internal_handler_flight.SearchRequest:
+    properties:
+      class:
+        description: Cabin class preference (optional)
+        enum:
+        - economy
+        - business
+        - first
+        example: economy
+        type: string
+      departureDate:
+        description: Departure date in YYYY-MM-DD format
+        example: "2025-01-15"
+        format: date
+        type: string
+      destination:
+        description: Destination airport IATA code (3 letters)
+        example: DPS
+        format: IATA code
+        type: string
+      filters:
+        allOf:
+        - $ref: '#/definitions/internal_handler_flight.FilterDTO'
+        description: Optional filters for search results
+      origin:
+        description: Origin airport IATA code (3 letters)
+        example: CGK
+        format: IATA code
+        type: string
+      passengers:
+        description: Number of passengers (1-9)
+        example: 2
+        maximum: 9
+        minimum: 1
+        type: integer
+      sortBy:
+        description: Sort order for results (optional)
+        enum:
+        - best
+        - price
+        - duration
+        - departure
+        example: price
+        type: string
+    required:
+    - departureDate
+    - destination
+    - origin
+    - passengers
+    type: object
+  internal_handler_flight.SearchResponse:
+    properties:
+      flights:
+        description: List of available flights matching criteria
+        items:
+          $ref: '#/definitions/internal_handler_flight.FlightDTO'
+        type: array
+      metadata:
+        allOf:
+        - $ref: '#/definitions/internal_handler_flight.Metadata'
+        description: Search execution metadata and statistics
+      search_criteria:
+        allOf:
+        - $ref: '#/definitions/internal_handler_flight.SearchCriteria'
+        description: Echo of the search criteria submitted
+    type: object
+  internal_handler_flight.TimeRangeDTO:
+    properties:
+      end:
+        description: End time in HH:MM format (24-hour)
+        example: "22:00"
+        type: string
+      start:
+        description: Start time in HH:MM format (24-hour)
+        example: "06:00"
+        type: string
+    required:
+    - end
+    - start
+    type: object
+  internal_handler_response.HealthResponse:
+    properties:
+      status:
+        description: Service health status
+        example: healthy
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: support@flightsearch.example.com
+    name: Flight Search API Support
+  description: |-
+    RESTful API for searching and aggregating flight information from multiple airline providers
+    This API aggregates flight data from Indonesian airlines including Garuda Indonesia, Lion Air, Batik Air, and AirAsia
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  title: Flight Search API
+  version: "1.0"
+paths:
+  /api/v1/flights/search:
+    post:
+      consumes:
+      - application/json
+      description: |-
+        Search for available flights from multiple airline providers based on search criteria
+        This endpoint aggregates flight data from Garuda Indonesia, Lion Air, Batik Air, and AirAsia
+      parameters:
+      - description: Flight search parameters
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handler_flight.SearchRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successful flight search with results
+          schema:
+            $ref: '#/definitions/internal_handler_flight.SearchResponse'
+        "400":
+          description: Invalid request body or validation error
+          schema:
+            $ref: '#/definitions/github_com_herdiagusthio_flight-search-system_internal_handler_response.ErrorDetail'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/github_com_herdiagusthio_flight-search-system_internal_handler_response.ErrorDetail'
+        "503":
+          description: Service unavailable - all providers failed
+          schema:
+            $ref: '#/definitions/github_com_herdiagusthio_flight-search-system_internal_handler_response.ErrorDetail'
+        "504":
+          description: Gateway timeout - search took too long
+          schema:
+            $ref: '#/definitions/github_com_herdiagusthio_flight-search-system_internal_handler_response.ErrorDetail'
+      summary: Search for flights
+      tags:
+      - flights
+  /health:
+    get:
+      consumes:
+      - application/json
+      description: Check if the API service is running and healthy
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Service is healthy
+          schema:
+            $ref: '#/definitions/internal_handler_response.HealthResponse'
+      summary: Health check
+      tags:
+      - health
+produces:
+- application/json
+schemes:
+- http
+- https
+securityDefinitions:
+  ApiKeyAuth:
+    description: API Key for authentication (optional)
+    in: header
+    name: X-API-Key
+    type: apiKey
+swagger: "2.0"
+tags:
+- description: Flight search and information operations
+  name: flights
+- description: Service health check operations
+  name: health

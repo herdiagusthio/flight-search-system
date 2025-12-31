@@ -27,6 +27,19 @@ func NewFlightHandler(searchUseCase usecase.FlightSearchUseCase, logger *zerolog
 }
 
 // HandleSearch processes flight search requests.
+// @Summary		Search for flights
+// @Description	Search for available flights from multiple airline providers based on search criteria
+// @Description	This endpoint aggregates flight data from Garuda Indonesia, Lion Air, Batik Air, and AirAsia
+// @Tags		flights
+// @Accept		json
+// @Produce		json
+// @Param		request	body		SearchRequest	true	"Flight search parameters"
+// @Success		200		{object}	SearchResponse	"Successful flight search with results"
+// @Failure		400		{object}	response.ErrorDetail	"Invalid request body or validation error"
+// @Failure		504		{object}	response.ErrorDetail	"Gateway timeout - search took too long"
+// @Failure		503		{object}	response.ErrorDetail	"Service unavailable - all providers failed"
+// @Failure		500		{object}	response.ErrorDetail	"Internal server error"
+// @Router		/api/v1/flights/search [post]
 // It parses the request, validates input, calls the use case, and returns the response.
 func (h *FlightHandler) HandleSearch(c echo.Context) error {
 	start := time.Now()

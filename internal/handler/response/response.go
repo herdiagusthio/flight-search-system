@@ -19,9 +19,10 @@ const (
 	MsgInternalError      = "An unexpected error occurred"
 )
 
+// ErrorDetail represents a standardized error response.
 type ErrorDetail struct {
-	Code string `json:"code"`
-	Message string `json:"message"`
-	Details map[string]string `json:"details,omitempty"`
+	Code    string            `json:"code" example:"validation_error"`                     // Error code identifier
+	Message string            `json:"message" example:"Request validation failed"`         // Human-readable error message
+	Details map[string]string `json:"details,omitempty" example:"field:origin,reason:required"` // Additional error details (optional)
 }
 

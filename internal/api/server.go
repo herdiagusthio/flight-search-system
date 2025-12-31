@@ -1,9 +1,39 @@
+// Package api Flight Search API
+//
+//	@title						Flight Search API
+//	@version					1.0
+//	@description				RESTful API for searching and aggregating flight information from multiple airline providers
+//	@description				This API aggregates flight data from Indonesian airlines including Garuda Indonesia, Lion Air, Batik Air, and AirAsia
+//
+//	@contact.name				Flight Search API Support
+//	@contact.email				support@flightsearch.example.com
+//
+//	@license.name				MIT
+//	@license.url				https://opensource.org/licenses/MIT
+//
+//	@host						localhost:8080
+//
+//	@schemes					http https
+//
+//	@tag.name					flights
+//	@tag.description			Flight search and information operations
+//	@tag.name					health
+//	@tag.description			Service health check operations
+//
+//	@accept						json
+//	@produce					json
+//
+//	@securitydefinitions.apikey	ApiKeyAuth
+//	@in							header
+//	@name						X-API-Key
+//	@description				API Key for authentication (optional)
 package api
 
 import (
 	"os"
 	"time"
 
+	_ "github.com/herdiagusthio/flight-search-system/docs" // Import generated Swagger docs
 	"github.com/herdiagusthio/flight-search-system/domain"
 	"github.com/herdiagusthio/flight-search-system/internal/config"
 	"github.com/herdiagusthio/flight-search-system/internal/handler/flight"
@@ -17,6 +47,7 @@ import (
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
+	echoSwagger "github.com/swaggo/echo-swagger"
 )
 
 // SetupLogger configures the global logger based on the provided configuration
@@ -96,6 +127,9 @@ func SetupDependencies(cfg *config.Config) *flight.FlightHandler {
 
 // SetupRouter configures all routes and route-specific middleware
 func SetupRouter(e *echo.Echo, cfg *config.Config) {
+	// Swagger documentation endpoint
+	e.GET("/swagger/*", echoSwagger.WrapHandler)
+	
 	// Health check endpoint at root level
 	e.GET("/health", func(c echo.Context) error {
 		return response.HealthCheck(c)

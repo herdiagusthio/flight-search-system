@@ -259,6 +259,43 @@ The system uses a concurrent scatter-gather pattern for optimal performance:
 
 ## 📡 API Reference
 
+### Interactive Documentation
+
+**Swagger UI (Recommended)**: Full interactive API documentation with try-it-out functionality
+
+```bash
+# Start the server
+go run cmd/api/main.go
+
+# Open Swagger UI in your browser
+http://localhost:8080/swagger/index.html
+```
+
+### Complete Documentation
+
+- **[API Documentation](docs/API.md)** - Comprehensive API guide with examples
+- **[Request Examples](docs/examples)** - Sample requests for all use cases
+- **[Postman Collection](docs/postman)** - Import into Postman for testing
+
+### Quick Reference
+
+#### Health Check
+
+**GET** `/health`
+
+Check if the API service is running.
+
+```bash
+curl http://localhost:8080/health
+```
+
+Response:
+```json
+{
+  "status": "healthy"
+}
+```
+
 ### Endpoint: Search Flights
 
 **POST** `/api/v1/flights/search`
@@ -282,14 +319,16 @@ Content-Type: application/json
   "class": "economy",
   "filters": {
     "maxPrice": 2000000,
-    "minPrice": 500000,
     "maxStops": 1,
     "airlines": ["GA", "JT"],
-    "departureTimeStart": "06:00",
-    "departureTimeEnd": "12:00",
-    "arrivalTimeStart": "08:00",
-    "arrivalTimeEnd": "14:00",
-    "maxDuration": 180
+    "departureTimeRange": {
+      "start": "06:00",
+      "end": "12:00"
+    },
+    "durationRange": {
+      "minMinutes": 60,
+      "maxMinutes": 180
+    }
   },
   "sortBy": "price"
 }

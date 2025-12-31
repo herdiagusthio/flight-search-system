@@ -14,36 +14,36 @@ var (
 
 // SearchRequest represents the HTTP request for flight search.
 type SearchRequest struct {
-	Origin        string         `json:"origin" binding:"required"`
-	Destination   string         `json:"destination" binding:"required"`
-	DepartureDate string         `json:"departureDate" binding:"required"`
-	Passengers    int            `json:"passengers" binding:"required,min=1,max=9"`
-	Class         string         `json:"class,omitempty"`
-	Filters       *FilterDTO     `json:"filters,omitempty"`
-	SortBy        string         `json:"sortBy,omitempty"`
+	Origin        string         `json:"origin" binding:"required" example:"CGK" validate:"required,len=3" format:"IATA code"`                                   // Origin airport IATA code (3 letters)
+	Destination   string         `json:"destination" binding:"required" example:"DPS" validate:"required,len=3" format:"IATA code"`                           // Destination airport IATA code (3 letters)
+	DepartureDate string         `json:"departureDate" binding:"required" example:"2025-01-15" format:"date" validate:"required"`                             // Departure date in YYYY-MM-DD format
+	Passengers    int            `json:"passengers" binding:"required,min=1,max=9" example:"2" minimum:"1" maximum:"9" validate:"required,min=1,max=9"`      // Number of passengers (1-9)
+	Class         string         `json:"class,omitempty" example:"economy" enums:"economy,business,first"`                                                    // Cabin class preference (optional)
+	Filters       *FilterDTO     `json:"filters,omitempty"`                                                                                                   // Optional filters for search results
+	SortBy        string         `json:"sortBy,omitempty" example:"price" enums:"best,price,duration,departure"`                                             // Sort order for results (optional)
 }
 
 // FilterDTO represents filter options in HTTP requests.
 type FilterDTO struct {
-	MaxPrice           *float64          `json:"maxPrice,omitempty"`
-	MaxStops           *int              `json:"maxStops,omitempty"`
-	Airlines           []string          `json:"airlines,omitempty"`
-	DepartureTimeRange *TimeRangeDTO     `json:"departureTimeRange,omitempty"`
-	ArrivalTimeRange   *TimeRangeDTO     `json:"arrivalTimeRange,omitempty"`
-	DurationRange      *DurationRangeDTO `json:"durationRange,omitempty"`
+	MaxPrice           *float64          `json:"maxPrice,omitempty" example:"5000000" minimum:"0"`                // Maximum price in IDR (optional)
+	MaxStops           *int              `json:"maxStops,omitempty" example:"1" minimum:"0"`                      // Maximum number of stops (optional)
+	Airlines           []string          `json:"airlines,omitempty" example:"GA,JT"`                              // Filter by airline codes (optional)
+	DepartureTimeRange *TimeRangeDTO     `json:"departureTimeRange,omitempty"`                                    // Filter by departure time range (optional)
+	ArrivalTimeRange   *TimeRangeDTO     `json:"arrivalTimeRange,omitempty"`                                      // Filter by arrival time range (optional)
+	DurationRange      *DurationRangeDTO `json:"durationRange,omitempty"`                                         // Filter by flight duration range (optional)
 }
 
 // TimeRangeDTO represents a time range filter in HTTP requests.
 // Time format should be "HH:MM" (24-hour format).
 type TimeRangeDTO struct {
-	Start string `json:"start" binding:"required"`
-	End   string `json:"end" binding:"required"`
+	Start string `json:"start" binding:"required" example:"06:00" pattern:"^([01]\\d|2[0-3]):([0-5]\\d)$"` // Start time in HH:MM format (24-hour)
+	End   string `json:"end" binding:"required" example:"22:00" pattern:"^([01]\\d|2[0-3]):([0-5]\\d)$"`   // End time in HH:MM format (24-hour)
 }
 
 // DurationRangeDTO represents a duration range filter in HTTP requests.
 type DurationRangeDTO struct {
-	MinMinutes *int `json:"minMinutes,omitempty"`
-	MaxMinutes *int `json:"maxMinutes,omitempty"`
+	MinMinutes *int `json:"minMinutes,omitempty" example:"60" minimum:"0"`  // Minimum flight duration in minutes (optional)
+	MaxMinutes *int `json:"maxMinutes,omitempty" example:"300" minimum:"0"` // Maximum flight duration in minutes (optional)
 }
 
 // Validate validates the search request.
