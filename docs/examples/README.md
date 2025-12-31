@@ -17,7 +17,7 @@ curl -X POST http://localhost:8080/api/v1/flights/search \
   -d '{
     "origin": "CGK",
     "destination": "DPS",
-    "departureDate": "2025-01-15",
+    "departureDate": "2025-12-15",
     "passengers": 2
   }'
 
@@ -85,7 +85,7 @@ The API validates all inputs. Try these to test error handling:
 {
   "origin": "JAKARTA",
   "destination": "DPS",
-  "departureDate": "2025-01-15",
+  "departureDate": "2025-12-15",
   "passengers": 2
 }
 ```
@@ -107,7 +107,7 @@ Expected: 400 Bad Request - "departureDate must be in YYYY-MM-DD format"
 {
   "origin": "CGK",
   "destination": "DPS",
-  "departureDate": "2025-01-15",
+  "departureDate": "2025-12-15",
   "passengers": 10
 }
 ```
@@ -118,7 +118,7 @@ Expected: 400 Bad Request - "passengers must be at most 9"
 {
   "origin": "CGK",
   "destination": "CGK",
-  "departureDate": "2025-01-15",
+  "departureDate": "2025-12-15",
   "passengers": 2
 }
 ```
@@ -129,7 +129,7 @@ Expected: 400 Bad Request - "origin and destination must be different"
 {
   "origin": "CGK",
   "destination": "DPS",
-  "departureDate": "2025-01-15",
+  "departureDate": "2025-12-15",
   "passengers": 2,
   "filters": {
     "departureTimeRange": {

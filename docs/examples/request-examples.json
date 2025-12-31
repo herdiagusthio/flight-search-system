@@ -4,7 +4,7 @@
         "request": {
             "origin": "CGK",
             "destination": "DPS",
-            "departureDate": "2025-01-15",
+            "departureDate": "2025-12-15",
             "passengers": 2
         }
     },
@@ -12,8 +12,8 @@
         "description": "Search with cabin class specification",
         "request": {
             "origin": "CGK",
-            "destination": "SUB",
-            "departureDate": "2025-02-01",
+            "destination": "DPS",
+            "departureDate": "2025-12-15",
             "passengers": 1,
             "class": "economy"
         }
@@ -23,7 +23,7 @@
         "request": {
             "origin": "CGK",
             "destination": "DPS",
-            "departureDate": "2025-01-20",
+            "departureDate": "2025-12-15",
             "passengers": 2,
             "filters": {
                 "maxPrice": 2000000
@@ -34,8 +34,8 @@
         "description": "Search for direct flights only (no stops)",
         "request": {
             "origin": "CGK",
-            "destination": "BDO",
-            "departureDate": "2025-03-10",
+            "destination": "DPS",
+            "departureDate": "2025-12-15",
             "passengers": 3,
             "filters": {
                 "maxStops": 0
@@ -46,8 +46,8 @@
         "description": "Search with departure time range",
         "request": {
             "origin": "CGK",
-            "destination": "SUB",
-            "departureDate": "2025-02-15",
+            "destination": "DPS",
+            "departureDate": "2025-12-15",
             "passengers": 1,
             "filters": {
                 "departureTimeRange": {
@@ -62,12 +62,12 @@
         "request": {
             "origin": "CGK",
             "destination": "DPS",
-            "departureDate": "2025-04-01",
+            "departureDate": "2025-12-15",
             "passengers": 2,
             "filters": {
                 "durationRange": {
                     "minMinutes": 60,
-                    "maxMinutes": 120
+                    "maxMinutes": 180
                 }
             }
         }
@@ -77,7 +77,7 @@
         "request": {
             "origin": "CGK",
             "destination": "DPS",
-            "departureDate": "2025-01-25",
+            "departureDate": "2025-12-15",
             "passengers": 2,
             "filters": {
                 "airlines": [
@@ -91,8 +91,8 @@
         "description": "Search with results sorted by price (cheapest first)",
         "request": {
             "origin": "CGK",
-            "destination": "SUB",
-            "departureDate": "2025-02-10",
+            "destination": "DPS",
+            "departureDate": "2025-12-15",
             "passengers": 1,
             "sortBy": "price"
         }
@@ -102,7 +102,7 @@
         "request": {
             "origin": "CGK",
             "destination": "DPS",
-            "departureDate": "2025-03-05",
+            "departureDate": "2025-12-15",
             "passengers": 2,
             "sortBy": "duration"
         }
@@ -112,7 +112,7 @@
         "request": {
             "origin": "CGK",
             "destination": "DPS",
-            "departureDate": "2025-01-30",
+            "departureDate": "2025-12-15",
             "passengers": 2,
             "class": "economy",
             "sortBy": "price",
@@ -143,11 +143,11 @@
         "description": "Search for business class flights",
         "request": {
             "origin": "CGK",
-            "destination": "SIN",
-            "departureDate": "2025-02-20",
+            "destination": "DPS",
+            "departureDate": "2025-12-15",
             "passengers": 1,
             "class": "business",
-            "sortBy": "best"
+            "sortBy": "best-value"
         }
     },
     "family_travel_search": {
@@ -155,14 +155,14 @@
         "request": {
             "origin": "CGK",
             "destination": "DPS",
-            "departureDate": "2025-06-15",
+            "departureDate": "2025-12-15",
             "passengers": 4,
             "class": "economy",
             "filters": {
                 "maxPrice": 8000000,
                 "departureTimeRange": {
-                    "start": "07:00",
-                    "end": "10:00"
+                    "start": "06:00",
+                    "end": "12:00"
                 }
             }
         }
