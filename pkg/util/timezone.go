@@ -42,34 +42,7 @@ func GetLocation(name string) (*time.Location, error) {
 	return loc, nil
 }
 
-func MustGetLocation(name string) *time.Location {
-	loc, err := GetLocation(name)
-	if err != nil {
-		panic(err)
-	}
-	return loc
-}
 
-func InTimezone(t time.Time, timezone string) (time.Time, error) {
-	loc, err := GetLocation(timezone)
-	if err != nil {
-		return t, err
-	}
-	return t.In(loc), nil
-}
-
-func NowIn(timezone string) (time.Time, error) {
-	return InTimezone(time.Now(), timezone)
-}
-
-func NowInJakarta() (time.Time, error) {
-	loc := MustGetLocation(WIB)
-	return time.Now().In(loc), nil
-}
-
-func NowInUTC() time.Time {
-	return time.Now().UTC()
-}
 
 func ParseInTimezone(layout, value, timezone string) (time.Time, error) {
 	loc, err := GetLocation(timezone)
@@ -79,29 +52,40 @@ func ParseInTimezone(layout, value, timezone string) (time.Time, error) {
 	return time.ParseInLocation(layout, value, loc)
 }
 
-func FormatDate(t time.Time) string {
-	return t.Format("2006-01-02")
-}
 
-func FormatTime(t time.Time) string {
-	return t.Format("15:04")
-}
 
-func FormatDateTime(t time.Time) string {
-	return t.Format("2006-01-02 15:04:05")
-}
+// GetTimezoneByAirport returns the IANA timezone for an Indonesian airport code.
+// Indonesian airports are divided into three time zones:
+//   - WIB (Western): Jakarta, Surabaya, Bandung, Medan, Semarang, Yogyakarta, etc.
+//   - WITA (Central): Bali, Makassar, Balikpapan, Manado, etc.
+//   - WIT (Eastern): Jayapura, Ambon, Timika, etc.
+//
+// For non-Indonesian or unknown airports, defaults to WIB.
+func GetTimezoneByAirport(airportCode string) string {
+	switch airportCode {
+	// Central Indonesia Time (WITA) - UTC+8
+	case "DPS", // Denpasar, Bali
+		"UPG", // Makassar
+		"BPN", // Balikpapan
+		"MDC", // Manado
+		"PLW", // Palu
+		"KDI", // Kendari
+		"LOP", // Lombok
+		"BDJ": // Banjarmasin
+		return WITA
 
-func StartofDay(t time.Time) time.Time {
-	return time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, t.Location())
-}
+	// Eastern Indonesia Time (WIT) - UTC+9
+	case "DJJ", // Jayapura
+		"AMQ", // Ambon
+		"TIM", // Timika
+		"MKQ", // Merauke
+		"SOQ", // Sorong
+		"BIK": // Biak
+		return WIT
 
-func EndofDay(t time.Time) time.Time {
-	return time.Date(t.Year(), t.Month(), t.Day(), 23, 59, 59, int(time.Second-time.Nanosecond), t.Location())
-}
-
-func ClearLocationCache() {
-	locationCache.Range(func(key, _ interface{}) bool {
-		locationCache.Delete(key)
-		return true
-	})
+	// Western Indonesia Time (WIB) - UTC+7 (default)
+	default:
+		// Includes: CGK, SUB, BDO, KNO, SRG, JOG, PLM, PKU, BTH, PNK, etc.
+		return WIB
+	}
 }

@@ -49,13 +49,13 @@ func normalize(lionAirFlights []LionAirFlight) []domain.Flight {
 // normalizeFlight converts a single Lion Air flight to a domain Flight entity.
 func normalizeFlight(f LionAirFlight) (domain.Flight, error) {
 	// Parse departure time with timezone
-	departureTime, err := parseDateTimeWithTimezone(f.Schedule.Departure, f.Schedule.DepartureTimezone)
+	departureTime, err := parseDateTimeWithTimezone(f.Schedule.Departure, f.Schedule.DepartureTimezone, f.Route.From.Code)
 	if err != nil {
 		return domain.Flight{}, fmt.Errorf("failed to parse departure time: %w", err)
 	}
 
 	// Parse arrival time with timezone
-	arrivalTime, err := parseDateTimeWithTimezone(f.Schedule.Arrival, f.Schedule.ArrivalTimezone)
+	arrivalTime, err := parseDateTimeWithTimezone(f.Schedule.Arrival, f.Schedule.ArrivalTimezone, f.Route.To.Code)
 	if err != nil {
 		return domain.Flight{}, fmt.Errorf("failed to parse arrival time: %w", err)
 	}
@@ -125,7 +125,8 @@ func normalizeFlight(f LionAirFlight) (domain.Flight, error) {
 
 // parseDateTimeWithTimezone parses a datetime string with a separate timezone.
 // The datetime format is "2006-01-02T15:04:05" (ISO 8601 without offset).
-func parseDateTimeWithTimezone(datetime, timezone string) (time.Time, error) {
+// If timezone is invalid/empty, tries to look up timezone by airport code.
+func parseDateTimeWithTimezone(datetime, timezone, airportCode string) (time.Time, error) {
 	// Try parsing with T separator (ISO 8601 format)
 	layout := "2006-01-02T15:04:05"
 	t, err := time.Parse(layout, datetime)
@@ -138,14 +139,22 @@ func parseDateTimeWithTimezone(datetime, timezone string) (time.Time, error) {
 		}
 	}
 
-	// Load the timezone location
-	loc, err := time.LoadLocation(timezone)
+	// Use caching for location loading
+	loc, err := util.GetLocation(timezone)
 	if err != nil {
-		// Fallback to UTC if timezone is invalid
-		return t.UTC(), nil
+		// If explicit timezone fails or is empty, try looking up by airport code
+		if airportCode != "" {
+			inferredTz := util.GetTimezoneByAirport(airportCode)
+			loc, err = util.GetLocation(inferredTz)
+		}
+		
+		// If still failed or no airport code, fallback to UTC
+		if err != nil {
+			return t.UTC(), nil
+		}
 	}
 
-	// Create time in the specified timezone
+	// Create time in the specified/inferred timezone
 	return time.Date(
 		t.Year(), t.Month(), t.Day(),
 		t.Hour(), t.Minute(), t.Second(), t.Nanosecond(),

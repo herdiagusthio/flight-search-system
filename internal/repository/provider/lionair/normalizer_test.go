@@ -167,7 +167,7 @@ func TestParseDateTimeWithTimezone(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := parseDateTimeWithTimezone(tt.datetime, tt.timezone)
+			_, err := parseDateTimeWithTimezone(tt.datetime, tt.timezone, "CGK")
 			if tt.expectError {
 				assert.Error(t, err)
 			} else {

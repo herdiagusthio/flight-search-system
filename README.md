@@ -3,7 +3,6 @@
 > A high-performance flight search system that aggregates results from multiple Indonesian airlines using concurrent queries and smart ranking algorithms.
 
 [![Go Version](https://img.shields.io/badge/Go-1.24+-00ADD8?style=flat&logo=go)](https://go.dev/)
-[![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 ## 📋 Table of Contents
 
@@ -14,10 +13,6 @@
 - [Configuration](#-configuration)
 - [Development](#-development)
 - [Testing](#-testing)
-- [Performance](#-performance)
-- [Roadmap](#-roadmap)
-- [Contributing](#-contributing)
-- [License](#-license)
 
 ## ✨ Features
 
@@ -165,9 +160,7 @@ The system follows Clean Architecture principles with clear separation of concer
 flight-search-system/
 ├── cmd/
 │   └── api/
-│       ├── main.go              # Application entry point
-│       ├── setup.go             # Dependency injection & server setup
-│       └── setup_test.go        # Setup unit tests
+│       └── main.go              # Application entry point
 │
 ├── domain/                      # Core business domain (entities, interfaces)
 │   ├── errors.go                # Domain-specific errors
@@ -178,14 +171,11 @@ flight-search-system/
 │   └── search.go                # Search criteria and options
 │
 ├── internal/
+│   ├── api/                     # API setup and configuration
+│   │   └── server.go            # Server setup, middleware, routes
+│   │
 │   ├── config/                  # Configuration management
 │   │   └── config.go            # Environment variable loading
-│   │
-│   ├── entity/                  # Provider-specific data structures
-│   │   ├── airasia.go
-│   │   ├── batikair.go
-│   │   ├── garuda.go
-│   │   └── lionair.go
 │   │
 │   ├── handler/                 # HTTP handlers
 │   │   ├── flight/
@@ -198,18 +188,22 @@ flight-search-system/
 │   │
 │   ├── repository/              # Data access layer
 │   │   └── provider/
-│   │       ├── airasia/         # AirAsia adapter
-│   │       ├── batikair/        # Batik Air adapter
-│   │       ├── garuda/          # Garuda Indonesia adapter
-│   │       └── lionair/         # Lion Air adapter
+│   │       ├── airasia/         # AirAsia adapter and normalizer
+│   │       ├── batikair/        # Batik Air adapter and normalizer
+│   │       ├── garuda/          # Garuda Indonesia adapter and normalizer
+│   │       └── lionair/         # Lion Air adapter and normalizer
 │   │
 │   └── usecase/                 # Business logic orchestration
-│       └── flight_search.go     # Flight search use case (scatter-gather)
+│       ├── flight_search.go     # Flight search use case (scatter-gather)
+│       ├── filter.go            # Filtering logic
+│       └── ranking.go           # Ranking algorithm
 │
 ├── pkg/                         # Shared utility packages
 │   └── util/
 │       ├── currency.go          # IDR currency formatting
-│       └── timezone.go          # Timezone handling utilities
+│       ├── duration.go          # Duration formatting
+│       ├── retry.go             # Retry utilities
+│       └── timezone.go          # Timezone handling
 │
 ├── tests/
 │   └── integration/             # End-to-end integration tests
@@ -222,10 +216,9 @@ flight-search-system/
 │       ├── garuda_indonesia_search_response.json
 │       └── lion_air_search_response.json
 │
-└── development-docs/            # Development documentation
-    ├── requirements.md
-    ├── development-plan.md
-    └── tickets/
+└── docs/                        # API documentation
+    ├── API.md
+    └── examples/
 ```
 
 ### Provider Characteristics
@@ -242,9 +235,9 @@ flight-search-system/
 The system uses a concurrent scatter-gather pattern for optimal performance:
 
 1. **Scatter Phase** - Simultaneously send requests to all providers
-   - Each provider runs in its own goroutine
+   - Each provider runs in parallel for optimal performance
    - Individual timeout enforcement (2s default)
-   - Context cancellation support
+   - Graceful request cancellation when timeout is reached
 
 2. **Gather Phase** - Collect results as they arrive
    - Wait for all providers or global timeout (5s default)
@@ -537,18 +530,7 @@ curl -X POST http://localhost:8080/api/v1/flights/search \
   }'
 ```
 
-### Health Check
 
-**GET** `/health`
-
-Returns server health status.
-
-**Response (200 OK)**:
-```json
-{
-  "status": "healthy"
-}
-```
 
 ## ⚙️ Configuration
 
@@ -612,32 +594,46 @@ PROVIDER_TIMEOUT=2s
 
 ### Adding a New Provider
 
-1. **Create entity structure** in `internal/entity/`:
+1. **Create provider package** in `internal/repository/provider/newprovider/`:
+   - `dto.go` - Provider-specific data structures
+   - `adapter.go` - Provider adapter implementation
+   - `normalizer.go` - Convert provider format to domain model
+
 ```go
+// dto.go - Provider-specific data structures
 type NewProviderFlight struct {
     FlightNumber string `json:"flight_number"`
     // ... provider-specific fields
 }
 ```
 
-2. **Create provider adapter** in `internal/repository/provider/newprovider/`:
+2. **Implement the adapter** (must implement `domain.FlightProvider` interface):
 ```go
+// adapter.go
 type Adapter struct {
-    logger *zerolog.Logger
+    mockDataPath   string
+    skipSimulation bool
 }
 
 func (a *Adapter) Search(ctx context.Context, criteria domain.SearchCriteria) ([]domain.Flight, error) {
     // Implementation
 }
+
+func (a *Adapter) Name() string {
+    return "newprovider"
+}
 ```
 
-3. **Register provider** in `cmd/api/setup.go`:
+3. **Register provider** in `internal/api/server.go`:
 ```go
-newProvider := newprovider.NewAdapter(logger)
-providers := []domain.Provider{
+// In SetupDependencies() function, add your new provider
+newProvider := newprovider.NewAdapter("external/response-mock/newprovider_search_response.json", false)
+
+providers := []domain.FlightProvider{
     garudaProvider,
     lionProvider,
     batikProvider,
+    airasiaProvider,
     newProvider, // Add here
 }
 ```
@@ -731,126 +727,8 @@ go test -coverprofile=coverage.out ./... && \
 go tool cover -func=coverage.out | grep total
 ```
 
-## ⚡ Performance
-
-### Performance Characteristics
-
-| Metric | Target | Actual | Status |
-|--------|--------|--------|--------|
-| Search latency (p50) | < 3s | ~285ms | ✅ Excellent |
-| Search latency (p95) | < 5s | ~450ms | ✅ Excellent |
-| Concurrent requests | 100+ | Tested 200+ | ✅ Good |
-| Memory per request | < 10MB | ~5MB | ✅ Good |
-| Provider timeout | 2s | 2s | ✅ Configured |
-| Total timeout | 5s | 5s | ✅ Configured |
-
-### Performance Tips
-
-1. **Adjust Timeouts** - Balance speed vs. completeness
-   ```env
-   PROVIDER_TIMEOUT=1s     # Faster but may miss slow providers
-   GLOBAL_SEARCH_TIMEOUT=3s # Quicker responses
-   ```
-
-2. **Filter Early** - Apply filters in request to reduce data processing
-
-3. **Monitor Logs** - Check for slow providers
-   ```bash
-   # Filter for slow requests
-   grep "search_time_ms" logs/app.log | awk '$NF > 3000'
-   ```
-
-4. **Consider Caching** - (Future enhancement) Cache popular routes
-
-### Optimization Strategies
-
-- **Concurrent Queries**: All providers queried simultaneously
-- **Early Cancellation**: Context cancellation on timeout
-- **Efficient Filtering**: Filter during aggregation, not after
-- **Normalized Scoring**: Pre-calculated ranking scores
-- **Zero-Copy JSON**: Efficient JSON parsing where possible
-
-## 🗺️ Roadmap
-
-### Current Features (v1.0)
-- ✅ Multi-provider flight search
-- ✅ Advanced filtering and ranking
-- ✅ Concurrent scatter-gather queries
-- ✅ Timezone handling
-- ✅ IDR currency formatting
-- ✅ Comprehensive error handling
-
-### Planned Features
-
-#### Phase 2: Enhanced Search
-- [ ] **Round-trip Search** - Support return flights
-- [ ] **Multi-city Search** - Complex itineraries
-- [ ] **Flexible Dates** - +/- 3 days search
-- [ ] **Nearby Airports** - Alternative departure/arrival airports
-
-#### Phase 3: Performance & Reliability
-- [ ] **Response Caching** - Redis-based caching for popular routes
-- [ ] **Rate Limiting** - Per-provider rate limits
-- [ ] **Retry Logic** - Exponential backoff for failed providers
-- [ ] **Circuit Breaker** - Automatic provider failure handling
-
-#### Phase 4: Advanced Features
-- [ ] **Price Alerts** - Notify users of price changes
-- [ ] **Price History** - Track historical pricing data
-- [ ] **Seat Maps** - Visual seat selection
-- [ ] **Booking Integration** - Direct booking capabilities
-
-#### Phase 5: Analytics & Monitoring
-- [ ] **Prometheus Metrics** - Detailed performance metrics
-- [ ] **Distributed Tracing** - OpenTelemetry integration
-- [ ] **Performance Dashboard** - Real-time monitoring
-- [ ] **Provider Health Checks** - Automated provider monitoring
-
-## 🤝 Contributing
-
-Contributions are welcome! Please follow these guidelines:
-
-### Getting Started
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Make your changes
-4. Run tests (`go test ./...`)
-5. Commit with clear messages (`git commit -m 'Add amazing feature'`)
-6. Push to your fork (`git push origin feature/amazing-feature`)
-7. Open a Pull Request
-
-### Pull Request Guidelines
-
-- **Write Tests**: Maintain >80% coverage
-- **Document Changes**: Update README if needed
-- **Follow Style**: Run `gofmt` and `golangci-lint`
-- **Small PRs**: Keep changes focused and reviewable
-- **Descriptive Titles**: Clearly explain what and why
-
-### Code Review Process
-
-1. Automated tests must pass
-2. Code review by maintainer
-3. Address feedback
-4. Merge when approved
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 📞 Contact & Support
-
-- **Author**: Herdi Agusthio
-- **GitHub**: [@herdiagusthio](https://github.com/herdiagusthio)
-- **Project Issues**: [GitHub Issues](https://github.com/herdiagusthio/flight-search-system/issues)
-
 ## 🙏 Acknowledgments
 
 - Built with [Echo](https://echo.labstack.com/) web framework
 - Logging powered by [zerolog](https://github.com/rs/zerolog)
 - Testing with [testify](https://github.com/stretchr/testify) and [gomock](https://github.com/uber-go/mock)
-
----
-
-**Made with ❤️ for Indonesian air travelers**

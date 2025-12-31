@@ -51,14 +51,14 @@ func normalize(batikAirFlights []BatikAirFlight) []domain.Flight {
 
 // normalizeFlight converts a single Batik Air flight to a domain Flight entity.
 func normalizeFlight(f BatikAirFlight) (domain.Flight, error) {
-	// Parse departure time
-	departureTime, err := parseDateTime(f.DepartureDateTime)
+	// Parse departure time with timezone fallback
+	departureTime, err := parseDateTime(f.DepartureDateTime, f.Origin)
 	if err != nil {
 		return domain.Flight{}, fmt.Errorf("failed to parse departure time: %w", err)
 	}
 
-	// Parse arrival time
-	arrivalTime, err := parseDateTime(f.ArrivalDateTime)
+	// Parse arrival time with timezone fallback
+	arrivalTime, err := parseDateTime(f.ArrivalDateTime, f.Destination)
 	if err != nil {
 		return domain.Flight{}, fmt.Errorf("failed to parse arrival time: %w", err)
 	}
@@ -116,8 +116,9 @@ func normalizeFlight(f BatikAirFlight) (domain.Flight, error) {
 }
 
 // parseDateTime parses an ISO 8601 datetime string to time.Time.
-// Supports formats: "2006-01-02T15:04:05+0700" and "2006-01-02T15:04:05Z07:00"
-func parseDateTime(datetime string) (time.Time, error) {
+// If timezone is missing from the datetime string, falls back to the airport's timezone.
+// Supports formats: "2006-01-02T15:04:05+0700", "2006-01-02T15:04:05Z07:00", and "2006-01-02T15:04:05" (without timezone)
+func parseDateTime(datetime, airportCode string) (time.Time, error) {
 	// Try RFC3339 format first (with colon in timezone)
 	t, err := time.Parse(time.RFC3339, datetime)
 	if err == nil {
@@ -130,13 +131,14 @@ func parseDateTime(datetime string) (time.Time, error) {
 		return t, nil
 	}
 
-	// Try without timezone
-	t, err = time.Parse("2006-01-02T15:04:05", datetime)
-	if err == nil {
-		return t, nil
+	// Fallback: parse without timezone and use airport's timezone
+	timezone := util.GetTimezoneByAirport(airportCode)
+	t, err = util.ParseInTimezone("2006-01-02T15:04:05", datetime, timezone)
+	if err != nil {
+		return time.Time{}, fmt.Errorf("unable to parse datetime %q for airport %s: %w", datetime, airportCode, err)
 	}
 
-	return time.Time{}, fmt.Errorf("unable to parse datetime %q", datetime)
+	return t, nil
 }
 
 // parseDurationString parses a duration string like "2h 15m" to total minutes.

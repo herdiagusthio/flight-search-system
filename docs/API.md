@@ -564,14 +564,6 @@ swag init -g internal/api/server.go -o docs --parseDependency --parseInternal
 - Must be non-negative number
 - Currency: IDR (Indonesian Rupiah)
 
-## Rate Limiting
-
-The API implements rate limiting to ensure fair usage:
-- Global: 100 requests per second
-- Per-IP: 10 requests per second
-
-Exceeded rate limits return HTTP 429 Too Many Requests.
-
 ## Response Headers
 
 Standard response headers include:

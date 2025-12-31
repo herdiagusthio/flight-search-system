@@ -49,12 +49,12 @@ func normalize(flights []AirAsiaFlight) []domain.Flight {
 // normalizeSingle converts a single AirAsiaFlight to a domain.Flight.
 // Returns false if the flight cannot be normalized (e.g., invalid datetime).
 func normalizeSingle(f AirAsiaFlight) (domain.Flight, bool) {
-	departureTime, err := parseDateTime(f.DepartTime)
+	departureTime, err := parseDateTime(f.DepartTime, f.FromAirport)
 	if err != nil {
 		return domain.Flight{}, false
 	}
 
-	arrivalTime, err := parseDateTime(f.ArriveTime)
+	arrivalTime, err := parseDateTime(f.ArriveTime, f.ToAirport)
 	if err != nil {
 		return domain.Flight{}, false
 	}
@@ -143,7 +143,10 @@ func directFlightToStops(isDirect bool, stops []AirAsiaStop) int {
 
 // parseDateTime parses an ISO 8601 datetime string to time.Time.
 // Supports formats with timezone offset (e.g., "2025-12-15T06:00:00+07:00").
-func parseDateTime(datetime string) (time.Time, error) {
+// parseDateTime parses an ISO 8601 datetime string to time.Time.
+// If timezone is missing, falls back to the airport's timezone.
+// Supports formats with timezone offset (e.g., "2025-12-15T06:00:00+07:00") and without.
+func parseDateTime(datetime, airportCode string) (time.Time, error) {
 	// Try standard RFC3339 format first
 	t, err := time.Parse(time.RFC3339, datetime)
 	if err == nil {
@@ -156,7 +159,14 @@ func parseDateTime(datetime string) (time.Time, error) {
 		return t, nil
 	}
 
-	return time.Time{}, fmt.Errorf("unable to parse datetime: %s", datetime)
+	// Fallback: parse without timezone and use airport's timezone
+	timezone := util.GetTimezoneByAirport(airportCode)
+	t, err = util.ParseInTimezone("2006-01-02T15:04:05", datetime, timezone)
+	if err != nil {
+		return time.Time{}, fmt.Errorf("unable to parse datetime %q for airport %s: %w", datetime, airportCode, err)
+	}
+
+	return t, nil
 }
 
 // parseBaggageNote extracts baggage weights from a baggage note string.

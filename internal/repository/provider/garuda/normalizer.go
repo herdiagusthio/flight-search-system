@@ -47,14 +47,14 @@ func normalize(garudaFlights []GarudaFlight) []domain.Flight {
 
 // normalizeFlight converts a single Garuda flight to a domain Flight entity.
 func normalizeFlight(f GarudaFlight) (domain.Flight, error) {
-	// Parse departure time
-	departureTime, err := parseDateTime(f.Departure.Time)
+	// Parse departure time with timezone fallback
+	departureTime, err := parseDateTime(f.Departure.Time, f.Departure.Airport)
 	if err != nil {
 		return domain.Flight{}, fmt.Errorf("failed to parse departure time: %w", err)
 	}
 
-	// Parse arrival time
-	arrivalTime, err := parseDateTime(f.Arrival.Time)
+	// Parse arrival time with timezone fallback
+	arrivalTime, err := parseDateTime(f.Arrival.Time, f.Arrival.Airport)
 	if err != nil {
 		return domain.Flight{}, fmt.Errorf("failed to parse arrival time: %w", err)
 	}
@@ -104,21 +104,23 @@ func normalizeFlight(f GarudaFlight) (domain.Flight, error) {
 }
 
 // parseDateTime parses an ISO 8601 datetime string to time.Time.
-// Supports formats: "2006-01-02T15:04:05Z07:00" and "2006-01-02T15:04:05"
-func parseDateTime(dateTime string) (time.Time, error) {
+// If timezone is missing from the datetime string, falls back to the airport's timezone.
+// Supports formats: "2006-01-02T15:04:05Z07:00" (with timezone) and "2006-01-02T15:04:05" (without timezone)
+func parseDateTime(dateTime, airportCode string) (time.Time, error) {
 	// Try RFC3339 format first (with timezone)
 	t, err := time.Parse(time.RFC3339, dateTime)
 	if err == nil {
 		return t, nil
 	}
 
-	// Try without timezone
-	t, err = time.Parse("2006-01-02T15:04:05", dateTime)
-	if err == nil {
-		return t, nil
+	// Fallback: parse without timezone and use airport's timezone
+	timezone := util.GetTimezoneByAirport(airportCode)
+	t, err = util.ParseInTimezone("2006-01-02T15:04:05", dateTime, timezone)
+	if err != nil {
+		return time.Time{}, fmt.Errorf("unable to parse datetime %q for airport %s: %w", dateTime, airportCode, err)
 	}
 
-	return time.Time{}, fmt.Errorf("unable to parse datetime %q", dateTime)
+	return t, nil
 }
 
 // formatAirportName creates a formatted airport name from code and city.
