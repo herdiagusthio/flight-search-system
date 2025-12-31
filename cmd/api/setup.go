@@ -4,6 +4,7 @@ import (
 	"os"
 
 	"github.com/herdiagusthio/flight-search-system/internal/config"
+	"github.com/herdiagusthio/flight-search-system/internal/handler/response"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/rs/zerolog"
@@ -59,6 +60,6 @@ func setupMiddleware(e *echo.Echo) {
 
 func setupRouter(e *echo.Echo, cfg *config.Config) {
 	e.GET("/health", func(c echo.Context) error {
-		return c.JSON(200, map[string]string{"status": "healthy"})
+		return response.HealthCheck(c)
 	})
 }
