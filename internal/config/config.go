@@ -12,6 +12,7 @@ import (
 type Config struct {
 	Server   ServerConfig
 	Timeouts TimeoutConfig
+	Retry    RetryConfig
 	Logging  LoggingConfig
 	App      AppConfig
 }
@@ -25,6 +26,13 @@ type ServerConfig struct {
 type TimeoutConfig struct {
 	GlobalSearch time.Duration `env:"GLOBAL_SEARCH_TIMEOUT" envDefault:"5s"`
 	Provider     time.Duration `env:"PROVIDER_TIMEOUT" envDefault:"2s"`
+}
+
+type RetryConfig struct {
+	MaxAttempts  int           `env:"RETRY_MAX_ATTEMPTS" envDefault:"3"`
+	InitialDelay time.Duration `env:"RETRY_INITIAL_DELAY" envDefault:"100ms"`
+	MaxDelay     time.Duration `env:"RETRY_MAX_DELAY" envDefault:"2s"`
+	Multiplier   float64       `env:"RETRY_MULTIPLIER" envDefault:"2.0"`
 }
 
 type LoggingConfig struct {
@@ -86,6 +94,24 @@ func validate(cfg *Config) error {
 	if cfg.Timeouts.Provider >= cfg.Timeouts.GlobalSearch {
 		return fmt.Errorf("PROVIDER_TIMEOUT (%s) should be less than GLOBAL_SEARCH_TIMEOUT (%s)",
 			cfg.Timeouts.Provider, cfg.Timeouts.GlobalSearch)
+	}
+
+	// Validate retry configuration
+	if cfg.Retry.MaxAttempts < 1 {
+		return fmt.Errorf("RETRY_MAX_ATTEMPTS must be at least 1; got %d", cfg.Retry.MaxAttempts)
+	}
+	if cfg.Retry.InitialDelay < 0 {
+		return fmt.Errorf("RETRY_INITIAL_DELAY must be non-negative; got %v", cfg.Retry.InitialDelay)
+	}
+	if cfg.Retry.MaxDelay < 0 {
+		return fmt.Errorf("RETRY_MAX_DELAY must be non-negative; got %v", cfg.Retry.MaxDelay)
+	}
+	if cfg.Retry.MaxDelay > 0 && cfg.Retry.InitialDelay > cfg.Retry.MaxDelay {
+		return fmt.Errorf("RETRY_INITIAL_DELAY (%v) should not exceed RETRY_MAX_DELAY (%v)",
+			cfg.Retry.InitialDelay, cfg.Retry.MaxDelay)
+	}
+	if cfg.Retry.Multiplier < 1.0 {
+		return fmt.Errorf("RETRY_MULTIPLIER must be at least 1.0; got %f", cfg.Retry.Multiplier)
 	}
 
 	// Validate log level

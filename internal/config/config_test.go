@@ -9,6 +9,16 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// validRetryConfig returns a valid retry configuration for testing
+func validRetryConfig() RetryConfig {
+	return RetryConfig{
+		MaxAttempts:  3,
+		InitialDelay: 100 * time.Millisecond,
+		MaxDelay:     2 * time.Second,
+		Multiplier:   2.0,
+	}
+}
+
 func TestValidate(t *testing.T) {
 	tests := []struct {
 		name    string
@@ -28,6 +38,7 @@ func TestValidate(t *testing.T) {
 					GlobalSearch: 5 * time.Second,
 					Provider:     2 * time.Second,
 				},
+				Retry: validRetryConfig(),
 				Logging: LoggingConfig{
 					Level:  "info",
 					Format: "json",
@@ -50,6 +61,7 @@ func TestValidate(t *testing.T) {
 					GlobalSearch: 5 * time.Second,
 					Provider:     2 * time.Second,
 				},
+				Retry: validRetryConfig(),
 				Logging: LoggingConfig{
 					Level:  "info",
 					Format: "json",
@@ -73,6 +85,7 @@ func TestValidate(t *testing.T) {
 					GlobalSearch: 5 * time.Second,
 					Provider:     2 * time.Second,
 				},
+				Retry: validRetryConfig(),
 				Logging: LoggingConfig{
 					Level:  "info",
 					Format: "json",
@@ -96,6 +109,7 @@ func TestValidate(t *testing.T) {
 					GlobalSearch: 5 * time.Second,
 					Provider:     2 * time.Second,
 				},
+				Retry: validRetryConfig(),
 				Logging: LoggingConfig{
 					Level:  "info",
 					Format: "json",
@@ -119,6 +133,7 @@ func TestValidate(t *testing.T) {
 					GlobalSearch: 5 * time.Second,
 					Provider:     2 * time.Second,
 				},
+				Retry: validRetryConfig(),
 				Logging: LoggingConfig{
 					Level:  "info",
 					Format: "json",
@@ -141,6 +156,7 @@ func TestValidate(t *testing.T) {
 					GlobalSearch: 5 * time.Second,
 					Provider:     2 * time.Second,
 				},
+				Retry: validRetryConfig(),
 				Logging: LoggingConfig{
 					Level:  "info",
 					Format: "json",
@@ -163,6 +179,7 @@ func TestValidate(t *testing.T) {
 					GlobalSearch: 5 * time.Second,
 					Provider:     2 * time.Second,
 				},
+				Retry: validRetryConfig(),
 				Logging: LoggingConfig{
 					Level:  "info",
 					Format: "json",
@@ -186,6 +203,7 @@ func TestValidate(t *testing.T) {
 					GlobalSearch: 5 * time.Second,
 					Provider:     2 * time.Second,
 				},
+				Retry: validRetryConfig(),
 				Logging: LoggingConfig{
 					Level:  "info",
 					Format: "json",
@@ -209,6 +227,7 @@ func TestValidate(t *testing.T) {
 					GlobalSearch: 5 * time.Second,
 					Provider:     2 * time.Second,
 				},
+				Retry: validRetryConfig(),
 				Logging: LoggingConfig{
 					Level:  "info",
 					Format: "json",
@@ -232,6 +251,7 @@ func TestValidate(t *testing.T) {
 					GlobalSearch: 0,
 					Provider:     2 * time.Second,
 				},
+				Retry: validRetryConfig(),
 				Logging: LoggingConfig{
 					Level:  "info",
 					Format: "json",
@@ -324,6 +344,7 @@ func TestValidate(t *testing.T) {
 					GlobalSearch: 5 * time.Second,
 					Provider:     2 * time.Second,
 				},
+				Retry: validRetryConfig(),
 				Logging: LoggingConfig{
 					Level:  "invalid",
 					Format: "json",
@@ -347,6 +368,7 @@ func TestValidate(t *testing.T) {
 					GlobalSearch: 5 * time.Second,
 					Provider:     2 * time.Second,
 				},
+				Retry: validRetryConfig(),
 				Logging: LoggingConfig{
 					Level:  "debug",
 					Format: "json",
@@ -369,6 +391,7 @@ func TestValidate(t *testing.T) {
 					GlobalSearch: 5 * time.Second,
 					Provider:     2 * time.Second,
 				},
+				Retry: validRetryConfig(),
 				Logging: LoggingConfig{
 					Level:  "warn",
 					Format: "json",
@@ -391,6 +414,7 @@ func TestValidate(t *testing.T) {
 					GlobalSearch: 5 * time.Second,
 					Provider:     2 * time.Second,
 				},
+				Retry: validRetryConfig(),
 				Logging: LoggingConfig{
 					Level:  "error",
 					Format: "json",
@@ -413,6 +437,7 @@ func TestValidate(t *testing.T) {
 					GlobalSearch: 5 * time.Second,
 					Provider:     2 * time.Second,
 				},
+				Retry: validRetryConfig(),
 				Logging: LoggingConfig{
 					Level:  "info",
 					Format: "text", // invalid, should be json or console
@@ -436,6 +461,7 @@ func TestValidate(t *testing.T) {
 					GlobalSearch: 5 * time.Second,
 					Provider:     2 * time.Second,
 				},
+				Retry: validRetryConfig(),
 				Logging: LoggingConfig{
 					Level:  "info",
 					Format: "console",
@@ -458,6 +484,7 @@ func TestValidate(t *testing.T) {
 					GlobalSearch: 5 * time.Second,
 					Provider:     2 * time.Second,
 				},
+				Retry: validRetryConfig(),
 				Logging: LoggingConfig{
 					Level:  "info",
 					Format: "json",
@@ -481,6 +508,7 @@ func TestValidate(t *testing.T) {
 					GlobalSearch: 5 * time.Second,
 					Provider:     2 * time.Second,
 				},
+				Retry: validRetryConfig(),
 				Logging: LoggingConfig{
 					Level:  "info",
 					Format: "json",
@@ -503,12 +531,186 @@ func TestValidate(t *testing.T) {
 					GlobalSearch: 5 * time.Second,
 					Provider:     2 * time.Second,
 				},
+				Retry: validRetryConfig(),
 				Logging: LoggingConfig{
 					Level:  "info",
 					Format: "json",
 				},
 				App: AppConfig{
 					Env: "production",
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "invalid retry - zero max attempts",
+			cfg: &Config{
+				Server: ServerConfig{
+					Port:         8080,
+					ReadTimeout:  5 * time.Second,
+					WriteTimeout: 5 * time.Second,
+				},
+				Timeouts: TimeoutConfig{
+					GlobalSearch: 5 * time.Second,
+					Provider:     2 * time.Second,
+				},
+				Retry: RetryConfig{
+					MaxAttempts:  0,
+					InitialDelay: 100 * time.Millisecond,
+					MaxDelay:     2 * time.Second,
+					Multiplier:   2.0,
+				},
+				Logging: LoggingConfig{
+					Level:  "info",
+					Format: "json",
+				},
+				App: AppConfig{
+					Env: "development",
+				},
+			},
+			wantErr: true,
+			errMsg:  "RETRY_MAX_ATTEMPTS must be at least 1; got 0",
+		},
+		{
+			name: "invalid retry - negative initial delay",
+			cfg: &Config{
+				Server: ServerConfig{
+					Port:         8080,
+					ReadTimeout:  5 * time.Second,
+					WriteTimeout: 5 * time.Second,
+				},
+				Timeouts: TimeoutConfig{
+					GlobalSearch: 5 * time.Second,
+					Provider:     2 * time.Second,
+				},
+				Retry: RetryConfig{
+					MaxAttempts:  3,
+					InitialDelay: -100 * time.Millisecond,
+					MaxDelay:     2 * time.Second,
+					Multiplier:   2.0,
+				},
+				Logging: LoggingConfig{
+					Level:  "info",
+					Format: "json",
+				},
+				App: AppConfig{
+					Env: "development",
+				},
+			},
+			wantErr: true,
+			errMsg:  "RETRY_INITIAL_DELAY must be non-negative; got -100ms",
+		},
+		{
+			name: "invalid retry - negative max delay",
+			cfg: &Config{
+				Server: ServerConfig{
+					Port:         8080,
+					ReadTimeout:  5 * time.Second,
+					WriteTimeout: 5 * time.Second,
+				},
+				Timeouts: TimeoutConfig{
+					GlobalSearch: 5 * time.Second,
+					Provider:     2 * time.Second,
+				},
+				Retry: RetryConfig{
+					MaxAttempts:  3,
+					InitialDelay: 100 * time.Millisecond,
+					MaxDelay:     -2 * time.Second,
+					Multiplier:   2.0,
+				},
+				Logging: LoggingConfig{
+					Level:  "info",
+					Format: "json",
+				},
+				App: AppConfig{
+					Env: "development",
+				},
+			},
+			wantErr: true,
+			errMsg:  "RETRY_MAX_DELAY must be non-negative; got -2s",
+		},
+		{
+			name: "invalid retry - initial delay > max delay",
+			cfg: &Config{
+				Server: ServerConfig{
+					Port:         8080,
+					ReadTimeout:  5 * time.Second,
+					WriteTimeout: 5 * time.Second,
+				},
+				Timeouts: TimeoutConfig{
+					GlobalSearch: 5 * time.Second,
+					Provider:     2 * time.Second,
+				},
+				Retry: RetryConfig{
+					MaxAttempts:  3,
+					InitialDelay: 5 * time.Second,
+					MaxDelay:     2 * time.Second,
+					Multiplier:   2.0,
+				},
+				Logging: LoggingConfig{
+					Level:  "info",
+					Format: "json",
+				},
+				App: AppConfig{
+					Env: "development",
+				},
+			},
+			wantErr: true,
+			errMsg:  "RETRY_INITIAL_DELAY (5s) should not exceed RETRY_MAX_DELAY (2s)",
+		},
+		{
+			name: "invalid retry - multiplier < 1.0",
+			cfg: &Config{
+				Server: ServerConfig{
+					Port:         8080,
+					ReadTimeout:  5 * time.Second,
+					WriteTimeout: 5 * time.Second,
+				},
+				Timeouts: TimeoutConfig{
+					GlobalSearch: 5 * time.Second,
+					Provider:     2 * time.Second,
+				},
+				Retry: RetryConfig{
+					MaxAttempts:  3,
+					InitialDelay: 100 * time.Millisecond,
+					MaxDelay:     2 * time.Second,
+					Multiplier:   0.5,
+				},
+				Logging: LoggingConfig{
+					Level:  "info",
+					Format: "json",
+				},
+				App: AppConfig{
+					Env: "development",
+				},
+			},
+			wantErr: true,
+			errMsg:  "RETRY_MULTIPLIER must be at least 1.0; got 0.500000",
+		},
+		{
+			name: "valid retry - minimum values",
+			cfg: &Config{
+				Server: ServerConfig{
+					Port:         8080,
+					ReadTimeout:  5 * time.Second,
+					WriteTimeout: 5 * time.Second,
+				},
+				Timeouts: TimeoutConfig{
+					GlobalSearch: 5 * time.Second,
+					Provider:     2 * time.Second,
+				},
+				Retry: RetryConfig{
+					MaxAttempts:  1,
+					InitialDelay: 0,
+					MaxDelay:     0,
+					Multiplier:   1.0,
+				},
+				Logging: LoggingConfig{
+					Level:  "info",
+					Format: "json",
+				},
+				App: AppConfig{
+					Env: "development",
 				},
 			},
 			wantErr: false,
@@ -549,6 +751,7 @@ func TestLoadConfig(t *testing.T) {
 					GlobalSearch: 5 * time.Second,
 					Provider:     2 * time.Second,
 				},
+				Retry: validRetryConfig(),
 				Logging: LoggingConfig{
 					Level:  "info",
 					Format: "json",
@@ -574,6 +777,7 @@ func TestLoadConfig(t *testing.T) {
 					GlobalSearch: 5 * time.Second,
 					Provider:     2 * time.Second,
 				},
+				Retry: validRetryConfig(),
 				Logging: LoggingConfig{
 					Level:  "info",
 					Format: "json",
@@ -602,6 +806,7 @@ func TestLoadConfig(t *testing.T) {
 					GlobalSearch: 30 * time.Second,
 					Provider:     5 * time.Second,
 				},
+				Retry: validRetryConfig(),
 				Logging: LoggingConfig{
 					Level:  "info",
 					Format: "json",
@@ -628,6 +833,7 @@ func TestLoadConfig(t *testing.T) {
 					GlobalSearch: 5 * time.Second,
 					Provider:     2 * time.Second,
 				},
+				Retry: validRetryConfig(),
 				Logging: LoggingConfig{
 					Level:  "debug",
 					Format: "console",
@@ -653,6 +859,7 @@ func TestLoadConfig(t *testing.T) {
 					GlobalSearch: 5 * time.Second,
 					Provider:     2 * time.Second,
 				},
+				Retry: validRetryConfig(),
 				Logging: LoggingConfig{
 					Level:  "info",
 					Format: "json",
@@ -712,6 +919,48 @@ func TestLoadConfig(t *testing.T) {
 			wantErr:  true,
 			errMatch: "validate config",
 		},
+		{
+			name: "custom retry config from env",
+			envVars: map[string]string{
+				"RETRY_MAX_ATTEMPTS":  "5",
+				"RETRY_INITIAL_DELAY": "200ms",
+				"RETRY_MAX_DELAY":     "5s",
+				"RETRY_MULTIPLIER":    "1.5",
+			},
+			wantCfg: &Config{
+				Server: ServerConfig{
+					Port:         8080,
+					ReadTimeout:  5 * time.Second,
+					WriteTimeout: 5 * time.Second,
+				},
+				Timeouts: TimeoutConfig{
+					GlobalSearch: 5 * time.Second,
+					Provider:     2 * time.Second,
+				},
+				Retry: RetryConfig{
+					MaxAttempts:  5,
+					InitialDelay: 200 * time.Millisecond,
+					MaxDelay:     5 * time.Second,
+					Multiplier:   1.5,
+				},
+				Logging: LoggingConfig{
+					Level:  "info",
+					Format: "json",
+				},
+				App: AppConfig{
+					Env: "development",
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "invalid retry - zero max attempts from env",
+			envVars: map[string]string{
+				"RETRY_MAX_ATTEMPTS": "0",
+			},
+			wantErr:  true,
+			errMatch: "validate config",
+		},
 	}
 
 	for _, tt := range tests {
@@ -720,6 +969,7 @@ func TestLoadConfig(t *testing.T) {
 			envVarsToClear := []string{
 				"PORT", "READ_TIMEOUT", "WRITE_TIMEOUT",
 				"GLOBAL_SEARCH_TIMEOUT", "PROVIDER_TIMEOUT",
+				"RETRY_MAX_ATTEMPTS", "RETRY_INITIAL_DELAY", "RETRY_MAX_DELAY", "RETRY_MULTIPLIER",
 				"LOG_LEVEL", "LOG_FORMAT", "ENV",
 			}
 			for _, key := range envVarsToClear {

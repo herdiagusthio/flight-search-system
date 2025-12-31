@@ -3,10 +3,14 @@ package usecase
 import (
 	"context"
 	"fmt"
+	"math"
+	"math/rand"
 	"sync"
 	"time"
 
 	"github.com/herdiagusthio/flight-search-system/domain"
+	"github.com/herdiagusthio/flight-search-system/pkg/util"
+	"github.com/rs/zerolog/log"
 )
 
 //go:generate mockgen -destination=flight_search_mock.go -package=usecase github.com/flight-search/flight-search-and-aggregation-system/internal/usecase FlightSearchUseCase
@@ -28,12 +32,14 @@ type flightSearchUseCase struct {
 	providers       []domain.FlightProvider
 	globalTimeout   time.Duration
 	providerTimeout time.Duration
+	retryConfig     util.RetryConfig
 }
 
 // Config contains configuration options for the use case.
 type Config struct {
 	GlobalTimeout   time.Duration
 	ProviderTimeout time.Duration
+	RetryConfig     util.RetryConfig
 }
 
 // DefaultConfig returns the default configuration.
@@ -41,6 +47,7 @@ func DefaultConfig() Config {
 	return Config{
 		GlobalTimeout:   DefaultGlobalTimeout,
 		ProviderTimeout: DefaultProviderTimeout,
+		RetryConfig:     util.DefaultRetryConfig(),
 	}
 }
 
@@ -55,12 +62,16 @@ func NewFlightSearchUseCase(providers []domain.FlightProvider, config *Config) F
 		if config.ProviderTimeout > 0 {
 			cfg.ProviderTimeout = config.ProviderTimeout
 		}
+		if config.RetryConfig.MaxAttempts > 0 {
+			cfg.RetryConfig = config.RetryConfig
+		}
 	}
 
 	return &flightSearchUseCase{
 		providers:       providers,
 		globalTimeout:   cfg.GlobalTimeout,
 		providerTimeout: cfg.ProviderTimeout,
+		retryConfig:     cfg.RetryConfig,
 	}
 }
 
@@ -190,12 +201,116 @@ func (uc *flightSearchUseCase) queryProvider(ctx context.Context, provider domai
 		}
 	}()
 
-	flights, err := provider.Search(ctx, criteria)
+	var flights []domain.Flight
+	var lastErr error
+
+	// Execute provider search with retry logic for retryable errors
+retryLoop:
+	for attempt := 1; attempt <= uc.retryConfig.MaxAttempts; attempt++ {
+		flights, lastErr = provider.Search(ctx, criteria)
+
+		// Check if context was cancelled during the provider call
+		if ctx.Err() != nil {
+			log.Debug().
+				Str("provider", providerName).
+				Int("attempt", attempt).
+				Msg("Context cancelled during provider call")
+			lastErr = ctx.Err()
+			break retryLoop
+		}
+
+		// Success - return immediately
+		if lastErr == nil {
+			if attempt > 1 {
+				log.Debug().
+					Str("provider", providerName).
+					Int("attempt", attempt).
+					Msg("Provider succeeded after retry")
+			}
+			break retryLoop
+		}
+
+		// Check if error is retryable
+		shouldRetry := true
+		if providerErr, ok := lastErr.(*domain.ProviderError); ok {
+			if !providerErr.Retryable {
+				// Non-retryable error, don't retry
+				log.Debug().
+					Str("provider", providerName).
+					Err(lastErr).
+					Bool("retryable", false).
+					Msg("Provider returned non-retryable error, will not retry")
+				shouldRetry = false
+			} else {
+				log.Debug().
+					Str("provider", providerName).
+					Err(lastErr).
+					Bool("retryable", true).
+					Int("attempt", attempt).
+					Int("max_attempts", uc.retryConfig.MaxAttempts).
+					Msg("Provider returned retryable error")
+			}
+		} else {
+			// Unknown error type, treat as retryable for backwards compatibility
+			log.Debug().
+				Str("provider", providerName).
+				Err(lastErr).
+				Int("attempt", attempt).
+				Int("max_attempts", uc.retryConfig.MaxAttempts).
+				Msg("Provider returned error (treating as retryable)")
+		}
+
+		// Don't retry if error is non-retryable or we've exhausted attempts
+		if !shouldRetry || attempt >= uc.retryConfig.MaxAttempts {
+			if shouldRetry && attempt >= uc.retryConfig.MaxAttempts {
+				log.Warn().
+					Str("provider", providerName).
+					Int("attempts", uc.retryConfig.MaxAttempts).
+					Err(lastErr).
+					Msg("Provider failed after all retry attempts")
+			}
+			break retryLoop
+		}
+
+		// Calculate exponential backoff delay
+		// Formula: initialDelay * multiplier^(attempt-1)
+		delay := time.Duration(float64(uc.retryConfig.InitialDelay) * 
+			math.Pow(uc.retryConfig.Multiplier, float64(attempt-1)))
+		if delay > uc.retryConfig.MaxDelay {
+			delay = uc.retryConfig.MaxDelay
+		}
+
+		// Add jitter (±20%)
+		jitter := time.Duration((rand.Float64()*0.4 - 0.2) * float64(delay))
+		delay += jitter
+		if delay < 0 {
+			delay = 0
+		}
+
+		log.Debug().
+			Str("provider", providerName).
+			Int("attempt", attempt).
+			Dur("delay", delay).
+			Msg("Sleeping before retry")
+
+		// Sleep with context cancellation support
+		select {
+		case <-time.After(delay):
+			// Continue to next retry
+		case <-ctx.Done():
+			log.Debug().
+				Str("provider", providerName).
+				Int("attempt", attempt).
+				Msg("Retry cancelled by context")
+			lastErr = ctx.Err()
+			break retryLoop
+		}
+	}
 
 	results <- providerResult{
 		Provider: providerName,
 		Flights:  flights,
-		Error:    err,
+		Error:    lastErr,
 		Duration: time.Since(start),
 	}
 }
