@@ -95,11 +95,11 @@ func normalizeFlight(f BatikAirFlight) (domain.Flight, error) {
 		},
 		Duration: domain.DurationInfo{
 			TotalMinutes: durationMinutes,
-			Formatted:    f.TravelTime,
+			Formatted:    util.FormatDuration(durationMinutes),
 		},
 		Price: domain.PriceInfo{
-			Amount:   totalPrice,
-			Currency: f.Fare.CurrencyCode,
+			Amount:    totalPrice,
+			Currency:  f.Fare.CurrencyCode,
 			Formatted: util.FormatIDR(totalPrice),
 		},
 		Baggage: domain.BaggageInfo{

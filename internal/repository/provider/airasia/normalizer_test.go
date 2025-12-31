@@ -31,6 +31,7 @@ func TestNormalize(t *testing.T) {
 	assert.Equal(t, "CGK", result[0].Departure.AirportCode)
 	assert.Equal(t, "DPS", result[0].Arrival.AirportCode)
 	assert.Equal(t, 150, result[0].Duration.TotalMinutes)
+	assert.Equal(t, "2h 30m", result[0].Duration.Formatted)
 	assert.Equal(t, float64(750000), result[0].Price.Amount)
 	assert.Equal(t, "IDR", result[0].Price.Currency)
 	assert.Equal(t, "Rp 750.000", result[0].Price.Formatted)
@@ -190,25 +191,6 @@ func TestHoursToMinutes(t *testing.T) {
 	for _, tt := range tests {
 		t.Run("", func(t *testing.T) {
 			assert.Equal(t, tt.expected, hoursToMinutes(tt.hours))
-		})
-	}
-}
-
-func TestFormatDurationFromHours(t *testing.T) {
-	tests := []struct {
-		hours    float64
-		expected string
-	}{
-		{1.5, "1h 30m"},
-		{2.0, "2h"},
-		{0.5, "30m"},
-		{0.0, "0m"},
-		{2.75, "2h 45m"},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.expected, func(t *testing.T) {
-			assert.Equal(t, tt.expected, formatDurationFromHours(tt.hours))
 		})
 	}
 }

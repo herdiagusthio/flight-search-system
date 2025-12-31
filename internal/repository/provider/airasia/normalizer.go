@@ -80,7 +80,7 @@ func normalizeSingle(f AirAsiaFlight) (domain.Flight, bool) {
 		},
 		Duration: domain.DurationInfo{
 			TotalMinutes: hoursToMinutes(f.DurationHours),
-			Formatted:    formatDurationFromHours(f.DurationHours),
+			Formatted:    util.FormatDuration(hoursToMinutes(f.DurationHours)),
 		},
 		Price: domain.PriceInfo{
 			Amount:   f.PriceIDR,
@@ -106,22 +106,6 @@ func generateFlightID(f AirAsiaFlight) string {
 // Examples: 1.75 → 105, 2.5 → 150, 0.5 → 30
 func hoursToMinutes(hours float64) int {
 	return int(math.Round(hours * 60))
-}
-
-// formatDurationFromHours formats a float duration as "Xh Ym".
-// Examples: 1.75 → "1h 45m", 2.5 → "2h 30m", 0.5 → "30m"
-func formatDurationFromHours(hours float64) string {
-	totalMinutes := hoursToMinutes(hours)
-	h := totalMinutes / 60
-	m := totalMinutes % 60
-
-	if h == 0 {
-		return fmt.Sprintf("%dm", m)
-	}
-	if m == 0 {
-		return fmt.Sprintf("%dh", h)
-	}
-	return fmt.Sprintf("%dh %dm", h, m)
 }
 
 // directFlightToStops converts the direct_flight boolean to stops count.
