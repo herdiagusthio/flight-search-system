@@ -182,8 +182,9 @@ flight-search-system/
 │   │   │   ├── request.go       # Request DTOs and validation
 │   │   │   ├── response.go      # Response DTOs and formatting
 │   │   │   └── search.go        # Search endpoint handler
-│   │   └── response/
+│   │   └── httputil/
 │   │       ├── errors.go        # Error response builders
+│   │       ├── response.go      # Error types and constants
 │   │       └── success.go       # Success response builders
 │   │
 │   ├── repository/              # Data access layer

@@ -46,11 +46,11 @@ Comprehensive Swagger/OpenAPI documentation has been successfully added to the F
 // @Produce      json
 // @Param        request body SearchRequest true "Flight search parameters"
 // @Success      200 {object} SearchResponse
-// @Failure      400 {object} response.ErrorDetail
+// @Failure      400 {object} httputil.ErrorDetail
 // @Router       /flights/search [post]
 ```
 
-**internal/handler/response/success.go**
+**internal/handler/httputil/success.go**
 ```go
 // @Summary      Health check
 // @Description  Check if the API service is running and healthy
@@ -97,10 +97,10 @@ Models documented:
 - `PriceDTO` - Price information
 - `BaggageDTO` - Baggage allowance
 
-**internal/handler/response/response.go**
+**internal/handler/httputil/response.go**
 - `ErrorDetail` - Standardized error response
 
-**internal/handler/response/success.go**
+**internal/handler/httputil/success.go**
 - `HealthResponse` - Health check response
 
 ### 4. Documentation Files
@@ -411,8 +411,8 @@ Swagger UI tested on:
 2. `internal/handler/flight/search.go` - Added annotations
 3. `internal/handler/flight/request.go` - Added model annotations
 4. `internal/handler/flight/response.go` - Added model annotations
-5. `internal/handler/response/response.go` - Added annotations
-6. `internal/handler/response/success.go` - Added annotations
+5. `internal/handler/httputil/response.go` - Added annotations
+6. `internal/handler/httputil/success.go` - Added annotations
 7. `README.md` - Updated API reference section
 8. `go.mod` - Added Swagger dependencies
 9. `go.sum` - Updated checksums
