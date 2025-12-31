@@ -261,6 +261,57 @@ func TestGenerateFlightID(t *testing.T) {
 	assert.Equal(t, "airasia-QZ-123-CGK-DPS", id)
 }
 
+func TestExtractAirlineCode(t *testing.T) {
+	tests := []struct {
+		name       string
+		flightCode string
+		expected   string
+	}{
+		{
+			name:       "standard QZ flight",
+			flightCode: "QZ520",
+			expected:   "QZ",
+		},
+		{
+			name:       "flight with hyphen",
+			flightCode: "QZ-123",
+			expected:   "QZ",
+		},
+		{
+			name:       "lowercase converts to uppercase",
+			flightCode: "qz999",
+			expected:   "QZ",
+		},
+		{
+			name:       "mixed case",
+			flightCode: "Qz100",
+			expected:   "QZ",
+		},
+		{
+			name:       "different airline code",
+			flightCode: "GA123",
+			expected:   "GA",
+		},
+		{
+			name:       "empty string fallback",
+			flightCode: "",
+			expected:   "QZ", // Falls back to airlineCode constant
+		},
+		{
+			name:       "single char fallback",
+			flightCode: "Q",
+			expected:   "QZ", // Falls back to airlineCode constant
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := extractAirlineCode(tt.flightCode)
+			assert.Equal(t, tt.expected, result)
+		})
+	}
+}
+
 func TestNormalizeWithInvalidFlights(t *testing.T) {
 	flights := []AirAsiaFlight{
 		{
@@ -333,3 +384,103 @@ func BenchmarkNormalize(b *testing.B) {
 		normalize(flights)
 	}
 }
+
+func TestFormatBaggageDescriptions(t *testing.T) {
+	tests := []struct {
+		name          string
+		note          string
+		cabinKg       int
+		checkedKg     int
+		expectCarryOn string
+		expectChecked string
+	}{
+		{
+			name:          "cabin baggage only with additional fee",
+			note:          "Cabin baggage only, checked bags additional fee",
+			cabinKg:       7,
+			checkedKg:     0,
+			expectCarryOn: "Cabin baggage only",
+			expectChecked: "Additional fee",
+		},
+		{
+			name:          "numeric baggage with no special note",
+			note:          "7kg cabin, 20kg checked",
+			cabinKg:       7,
+			checkedKg:     20,
+			expectCarryOn: "7kg cabin",
+			expectChecked: "20kg checked",
+		},
+		{
+			name:          "no baggage included",
+			note:          "",
+			cabinKg:       0,
+			checkedKg:     0,
+			expectCarryOn: "Not included",
+			expectChecked: "Not included",
+		},
+		{
+			name:          "cabin only no checked",
+			note:          "7kg cabin",
+			cabinKg:       7,
+			checkedKg:     0,
+			expectCarryOn: "7kg cabin",
+			expectChecked: "Not included",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			carryOn, checked := formatBaggageDescriptions(tt.note, tt.cabinKg, tt.checkedKg)
+			assert.Equal(t, tt.expectCarryOn, carryOn)
+			assert.Equal(t, tt.expectChecked, checked)
+		})
+	}
+}
+
+func TestNormalizeSingleWithNewFields(t *testing.T) {
+	tests := []struct {
+		name                 string
+		flight               AirAsiaFlight
+		expectSeats          int
+		expectAircraft       string
+		expectAmenities      []string
+		expectCarryOnDesc    string
+		expectCheckedDesc    string
+	}{
+		{
+			name: "flight with seats and baggage description",
+			flight: AirAsiaFlight{
+				FlightCode:    "QZ-100",
+				Airline:       "AirAsia",
+				FromAirport:   "CGK",
+				ToAirport:     "DPS",
+				DepartTime:    "2025-12-15T10:00:00+07:00",
+				ArriveTime:    "2025-12-15T12:30:00+08:00",
+				DurationHours: 2.5,
+				PriceIDR:      500000,
+				CabinClass:    "Economy",
+				DirectFlight:  true,
+				Seats:         88,
+				BaggageNote:   "Cabin baggage only, checked bags additional fee",
+			},
+			expectSeats:       88,
+			expectAircraft:    "",
+			expectAmenities:   []string{},
+			expectCarryOnDesc: "Cabin baggage only",
+			expectCheckedDesc: "Additional fee",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result, ok := normalizeSingle(tt.flight)
+			assert.True(t, ok)
+			assert.Equal(t, tt.expectSeats, result.AvailableSeats)
+			assert.Equal(t, tt.expectAircraft, result.Aircraft)
+			assert.Equal(t, tt.expectAmenities, result.Amenities)
+			assert.Equal(t, tt.expectCarryOnDesc, result.Baggage.CarryOnDesc)
+			assert.Equal(t, tt.expectCheckedDesc, result.Baggage.CheckedDesc)
+		})
+	}
+}
+

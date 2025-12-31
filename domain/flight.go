@@ -7,18 +7,21 @@ import (
 
 // Flight represents a single flight offering from a provider.
 type Flight struct {
-	ID           string       `json:"id"`
-	FlightNumber string       `json:"flightNumber"`
-	Airline      AirlineInfo  `json:"airline"`
-	Departure    FlightPoint  `json:"departure"`
-	Arrival      FlightPoint  `json:"arrival"`
-	Duration     DurationInfo `json:"duration"`
-	Price        PriceInfo    `json:"price"`
-	Baggage      BaggageInfo  `json:"baggage"`
-	Class        string       `json:"class"`
-	Stops        int          `json:"stops"`
-	Provider     string       `json:"provider"`
-	RankingScore float64      `json:"rankingScore,omitempty"`
+	ID             string       `json:"id"`
+	FlightNumber   string       `json:"flightNumber"`
+	Airline        AirlineInfo  `json:"airline"`
+	Departure      FlightPoint  `json:"departure"`
+	Arrival        FlightPoint  `json:"arrival"`
+	Duration       DurationInfo `json:"duration"`
+	Price          PriceInfo    `json:"price"`
+	Baggage        BaggageInfo  `json:"baggage"`
+	Class          string       `json:"class"`
+	Stops          int          `json:"stops"`
+	Provider       string       `json:"provider"`
+	RankingScore   float64      `json:"rankingScore,omitempty"`
+	AvailableSeats int          `json:"availableSeats"`
+	Aircraft       string       `json:"aircraft,omitempty"`
+	Amenities      []string     `json:"amenities,omitempty"`
 }
 
 // AirlineInfo contains information about an airline.
@@ -52,8 +55,10 @@ type PriceInfo struct {
 
 // BaggageInfo contains baggage allowance information.
 type BaggageInfo struct {
-	CabinKg   int `json:"cabinKg"`
-	CheckedKg int `json:"checkedKg"`
+	CabinKg     int    `json:"cabinKg"`
+	CheckedKg   int    `json:"checkedKg"`
+	CarryOnDesc string `json:"carryOnDesc,omitempty"`
+	CheckedDesc string `json:"checkedDesc,omitempty"`
 }
 
 // NewDurationInfo creates a DurationInfo from total minutes and formats it.

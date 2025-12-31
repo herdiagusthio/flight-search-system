@@ -106,9 +106,12 @@ func normalizeFlight(f BatikAirFlight) (domain.Flight, error) {
 			CabinKg:   cabinKg,
 			CheckedKg: checkedKg,
 		},
-		Class:    mapCabinClass(f.Fare.Class),
-		Stops:    f.NumberOfStops,
-		Provider: ProviderName,
+		Class:          mapCabinClass(f.Fare.Class),
+		Stops:          f.NumberOfStops,
+		Provider:       ProviderName,
+		AvailableSeats: f.SeatsAvailable,
+		Aircraft:       f.AircraftModel,
+		Amenities:      f.OnboardServices,
 	}, nil
 }
 

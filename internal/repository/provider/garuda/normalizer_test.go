@@ -217,3 +217,113 @@ func TestNormalizeClass(t *testing.T) {
 		})
 	}
 }
+
+func TestNormalizeFlightWithNewFields(t *testing.T) {
+	tests := []struct {
+		name           string
+		flight         GarudaFlight
+		expectSeats    int
+		expectAircraft string
+		expectAmenities []string
+	}{
+		{
+			name: "flight with all new fields",
+			flight: GarudaFlight{
+				FlightID:       "GA-NEW",
+				Airline:        "Garuda Indonesia",
+				AirlineCode:    "GA",
+				Departure:      GarudaEndpoint{Airport: "CGK", Time: "2025-12-15T10:00:00+07:00"},
+				Arrival:        GarudaEndpoint{Airport: "DPS", Time: "2025-12-15T12:00:00+08:00"},
+				DurationMinutes: 120,
+				Price:          GarudaPrice{Amount: 1000000, Currency: "IDR"},
+				FareClass:      "Y",
+				AvailableSeats: 45,
+				Aircraft:       "Boeing 737-800",
+				Amenities:      []string{"wifi", "meal", "entertainment"},
+			},
+			expectSeats:    45,
+			expectAircraft: "Boeing 737-800",
+			expectAmenities: []string{"wifi", "meal", "entertainment"},
+		},
+		{
+			name: "flight without optional fields",
+			flight: GarudaFlight{
+				FlightID:       "GA-BASIC",
+				Airline:        "Garuda Indonesia",
+				AirlineCode:    "GA",
+				Departure:      GarudaEndpoint{Airport: "CGK", Time: "2025-12-15T10:00:00+07:00"},
+				Arrival:        GarudaEndpoint{Airport: "DPS", Time: "2025-12-15T12:00:00+08:00"},
+				DurationMinutes: 120,
+				Price:          GarudaPrice{Amount: 1000000, Currency: "IDR"},
+				FareClass:      "Y",
+			},
+			expectSeats:    0,
+			expectAircraft: "",
+			expectAmenities: nil,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result, err := normalizeFlight(tt.flight)
+			assert.NoError(t, err)
+			assert.Equal(t, tt.expectSeats, result.AvailableSeats)
+			assert.Equal(t, tt.expectAircraft, result.Aircraft)
+			assert.Equal(t, tt.expectAmenities, result.Amenities)
+		})
+	}
+}
+
+func TestNormalizeWithValidationFailure(t *testing.T) {
+	// Flight where arrival is before departure (validation will fail)
+	flights := []GarudaFlight{
+		{
+			FlightID:    "GA-BAD",
+			Airline:     "Garuda Indonesia",
+			AirlineCode: "GA",
+			Departure: GarudaEndpoint{
+				Airport: "CGK",
+				Time:    "2025-12-15T12:00:00+07:00",
+			},
+			Arrival: GarudaEndpoint{
+				Airport: "DPS",
+				Time:    "2025-12-15T10:00:00+07:00", // Before departure
+			},
+			DurationMinutes: 120,
+			Price:           GarudaPrice{Amount: 1000000, Currency: "IDR"},
+			FareClass:       "Y",
+		},
+	}
+
+	result := normalize(flights)
+
+	// Should be empty because validation fails
+	assert.Empty(t, result)
+}
+
+func TestNormalizeWithMixedFlights(t *testing.T) {
+	flights := []GarudaFlight{
+		{
+			FlightID:    "GA-VALID",
+			Airline:     "Garuda Indonesia",
+			AirlineCode: "GA",
+			Departure:   GarudaEndpoint{Airport: "CGK", Time: "2025-12-15T06:00:00+07:00"},
+			Arrival:     GarudaEndpoint{Airport: "DPS", Time: "2025-12-15T08:00:00+08:00"},
+			DurationMinutes: 120,
+			Price:       GarudaPrice{Amount: 1000000, Currency: "IDR"},
+			FareClass:   "Y",
+		},
+		{
+			FlightID:  "GA-INVALID",
+			Departure: GarudaEndpoint{Airport: "CGK", Time: "invalid"},
+			Arrival:   GarudaEndpoint{Airport: "DPS", Time: "2025-12-15T08:00:00+07:00"},
+		},
+	}
+
+	result := normalize(flights)
+
+	// Should only include valid flight
+	assert.Len(t, result, 1)
+	assert.Equal(t, "GA-VALID", result[0].FlightNumber)
+}
+

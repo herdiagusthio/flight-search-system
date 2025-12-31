@@ -274,3 +274,90 @@ func TestNormalizeWithMultipleFlights(t *testing.T) {
 	result := normalize(flights)
 	assert.Len(t, result, 2)
 }
+
+func TestNormalizeFlightWithNewFields(t *testing.T) {
+	tests := []struct {
+		name            string
+		flight          BatikAirFlight
+		expectSeats     int
+		expectAircraft  string
+		expectAmenities []string
+	}{
+		{
+			name: "flight with all new fields",
+			flight: BatikAirFlight{
+				FlightNumber:      "ID-NEW",
+				AirlineName:       "Batik Air",
+				AirlineIATA:       "ID",
+				Origin:            "CGK",
+				Destination:       "DPS",
+				DepartureDateTime: "2025-12-15T10:00:00+07:00",
+				ArrivalDateTime:   "2025-12-15T12:00:00+08:00",
+				TravelTime:        "2h 0m",
+				Fare:              BatikAirFare{TotalPrice: 1000000, CurrencyCode: "IDR", Class: "Y"},
+				SeatsAvailable:    35,
+				AircraftModel:     "Airbus A320",
+				OnboardServices:   []string{"wifi", "meal"},
+			},
+			expectSeats:     35,
+			expectAircraft:  "Airbus A320",
+			expectAmenities: []string{"wifi", "meal"},
+		},
+		{
+			name: "flight without optional fields",
+			flight: BatikAirFlight{
+				FlightNumber:      "ID-BASIC",
+				AirlineName:       "Batik Air",
+				AirlineIATA:       "ID",
+				Origin:            "CGK",
+				Destination:       "DPS",
+				DepartureDateTime: "2025-12-15T10:00:00+07:00",
+				ArrivalDateTime:   "2025-12-15T12:00:00+08:00",
+				TravelTime:        "2h 0m",
+				Fare:              BatikAirFare{TotalPrice: 1000000, CurrencyCode: "IDR", Class: "Y"},
+			},
+			expectSeats:     0,
+			expectAircraft:  "",
+			expectAmenities: nil,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result, err := normalizeFlight(tt.flight)
+			assert.NoError(t, err)
+			assert.Equal(t, tt.expectSeats, result.AvailableSeats)
+			assert.Equal(t, tt.expectAircraft, result.Aircraft)
+			assert.Equal(t, tt.expectAmenities, result.Amenities)
+		})
+	}
+}
+
+func TestNormalizeWithMixedValidAndInvalid(t *testing.T) {
+	flights := []BatikAirFlight{
+		{
+			FlightNumber:      "ID-VALID",
+			AirlineName:       "Batik Air",
+			AirlineIATA:       "ID",
+			Origin:            "CGK",
+			Destination:       "DPS",
+			DepartureDateTime: "2025-12-15T06:00:00+07:00",
+			ArrivalDateTime:   "2025-12-15T08:00:00+08:00",
+			TravelTime:        "2h 0m",
+			Fare:              BatikAirFare{TotalPrice: 1000000, CurrencyCode: "IDR", Class: "Y"},
+		},
+		{
+			FlightNumber:      "ID-INVALID",
+			DepartureDateTime: "invalid",
+			ArrivalDateTime:   "2025-12-15T08:00:00+07:00",
+			TravelTime:        "2h 0m",
+		},
+	}
+
+	result := normalize(flights)
+
+	// Should only include valid flight
+	assert.Len(t, result, 1)
+	assert.Equal(t, "ID-VALID", result[0].FlightNumber)
+}
+

@@ -392,3 +392,102 @@ func TestNormalizeFlightWithStopCountOnly(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, 2, result.Stops) // Should use StopCount
 }
+
+func TestNormalizeFlightAmenitiesFromServices(t *testing.T) {
+	tests := []struct {
+		name            string
+		wifiAvailable   bool
+		mealsIncluded   bool
+		expectAmenities []string
+	}{
+		{
+			name:            "no amenities",
+			wifiAvailable:   false,
+			mealsIncluded:   false,
+			expectAmenities: []string{},
+		},
+		{
+			name:            "wifi only",
+			wifiAvailable:   true,
+			mealsIncluded:   false,
+			expectAmenities: []string{"wifi"},
+		},
+		{
+			name:            "meals only",
+			wifiAvailable:   false,
+			mealsIncluded:   true,
+			expectAmenities: []string{"meal"},
+		},
+		{
+			name:            "both wifi and meals",
+			wifiAvailable:   true,
+			mealsIncluded:   true,
+			expectAmenities: []string{"wifi", "meal"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			flight := LionAirFlight{
+				ID:      "JT-100",
+				Carrier: LionAirCarrier{IATA: "JT", Name: "Lion Air"},
+				Route: LionAirRoute{
+					From: LionAirAirport{Code: "CGK"},
+					To:   LionAirAirport{Code: "DPS"},
+				},
+				Schedule: LionAirSchedule{
+					Departure:         "2025-12-15T10:00:00",
+					DepartureTimezone: "Asia/Jakarta",
+					Arrival:           "2025-12-15T12:00:00",
+					ArrivalTimezone:   "Asia/Makassar",
+				},
+				FlightTime: 120,
+				IsDirect:   true,
+				Pricing:    LionAirPricing{Total: 800000, Currency: "IDR", FareType: "Y"},
+				Services: LionAirServices{
+					WiFiAvailable:    tt.wifiAvailable,
+					MealsIncluded:    tt.mealsIncluded,
+					BaggageAllowance: LionAirBaggageAllowance{Cabin: "7 kg", Hold: "20 kg"},
+				},
+			}
+
+			result, err := normalizeFlight(flight)
+			assert.NoError(t, err)
+			assert.Equal(t, tt.expectAmenities, result.Amenities)
+		})
+	}
+}
+
+func TestNormalizeFlightWithNewFields(t *testing.T) {
+	flight := LionAirFlight{
+		ID:      "JT-NEW",
+		Carrier: LionAirCarrier{IATA: "JT", Name: "Lion Air"},
+		Route: LionAirRoute{
+			From: LionAirAirport{Code: "CGK"},
+			To:   LionAirAirport{Code: "DPS"},
+		},
+		Schedule: LionAirSchedule{
+			Departure:         "2025-12-15T10:00:00",
+			DepartureTimezone: "Asia/Jakarta",
+			Arrival:           "2025-12-15T12:00:00",
+			ArrivalTimezone:   "Asia/Makassar",
+		},
+		FlightTime: 120,
+		IsDirect:   true,
+		Pricing:    LionAirPricing{Total: 800000, Currency: "IDR", FareType: "Y"},
+		SeatsLeft:  45,
+		PlaneType:  "Boeing 737-900ER",
+		Services: LionAirServices{
+			WiFiAvailable:    true,
+			MealsIncluded:    true,
+			BaggageAllowance: LionAirBaggageAllowance{Cabin: "7 kg", Hold: "20 kg"},
+		},
+	}
+
+	result, err := normalizeFlight(flight)
+	assert.NoError(t, err)
+	assert.Equal(t, 45, result.AvailableSeats)
+	assert.Equal(t, "Boeing 737-900ER", result.Aircraft)
+	assert.Equal(t, []string{"wifi", "meal"}, result.Amenities)
+}
+

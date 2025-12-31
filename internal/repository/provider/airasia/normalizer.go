@@ -63,11 +63,14 @@ func normalizeSingle(f AirAsiaFlight) (domain.Flight, bool) {
 	flightID := generateFlightID(f)
 	cabinKg, checkedKg := parseBaggageNote(f.BaggageNote)
 
+	// Parse baggage descriptions from the note
+	carryOnDesc, checkedDesc := formatBaggageDescriptions(f.BaggageNote, cabinKg, checkedKg)
+
 	return domain.Flight{
 		ID:           flightID,
 		FlightNumber: f.FlightCode,
 		Airline: domain.AirlineInfo{
-			Code: airlineCode,
+			Code: extractAirlineCode(f.FlightCode),
 			Name: f.Airline,
 		},
 		Departure: domain.FlightPoint{
@@ -88,18 +91,33 @@ func normalizeSingle(f AirAsiaFlight) (domain.Flight, bool) {
 			Formatted: util.FormatIDR(f.PriceIDR),
 		},
 		Baggage: domain.BaggageInfo{
-			CabinKg:   cabinKg,
-			CheckedKg: checkedKg,
+			CabinKg:     cabinKg,
+			CheckedKg:   checkedKg,
+			CarryOnDesc: carryOnDesc,
+			CheckedDesc: checkedDesc,
 		},
-		Class:    strings.ToLower(f.CabinClass),
-		Stops:    stopsCount,
-		Provider: ProviderName,
+		Class:          strings.ToLower(f.CabinClass),
+		Stops:          stopsCount,
+		Provider:       ProviderName,
+		AvailableSeats: f.Seats,
+		Aircraft:       "", // AirAsia mock data doesn't include aircraft info
+		Amenities:      []string{}, // AirAsia mock data doesn't include amenities
 	}, true
 }
 
 // generateFlightID creates a unique identifier for a flight.
 func generateFlightID(f AirAsiaFlight) string {
 	return fmt.Sprintf("%s-%s-%s-%s", ProviderName, f.FlightCode, f.FromAirport, f.ToAirport)
+}
+
+// extractAirlineCode extracts the 2-character IATA airline code from a flight code.
+// Flight codes follow the format {airline_code}{flight_number}, e.g., "QZ520" → "QZ"
+// Falls back to the default airlineCode constant if the flight code is too short.
+func extractAirlineCode(flightCode string) string {
+	if len(flightCode) >= 2 {
+		return strings.ToUpper(flightCode[:2])
+	}
+	return airlineCode
 }
 
 // hoursToMinutes converts float hours to integer minutes with proper rounding.
@@ -164,4 +182,30 @@ func parseBaggageNote(note string) (cabinKg, checkedKg int) {
 	}
 
 	return cabinKg, checkedKg
+}
+
+// formatBaggageDescriptions generates descriptive baggage strings from the baggage note.
+// For AirAsia, the baggage note contains descriptive text like "Cabin baggage only, checked bags additional fee"
+func formatBaggageDescriptions(note string, cabinKg, checkedKg int) (carryOnDesc, checkedDesc string) {
+	noteLower := strings.ToLower(note)
+
+	// Determine carry-on description
+	if strings.Contains(noteLower, "cabin baggage only") {
+		carryOnDesc = "Cabin baggage only"
+	} else if cabinKg > 0 {
+		carryOnDesc = fmt.Sprintf("%dkg cabin", cabinKg)
+	} else {
+		carryOnDesc = "Not included"
+	}
+
+	// Determine checked baggage description
+	if strings.Contains(noteLower, "additional fee") && strings.Contains(noteLower, "checked") {
+		checkedDesc = "Additional fee"
+	} else if checkedKg > 0 {
+		checkedDesc = fmt.Sprintf("%dkg checked", checkedKg)
+	} else {
+		checkedDesc = "Not included"
+	}
+
+	return carryOnDesc, checkedDesc
 }

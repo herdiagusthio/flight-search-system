@@ -73,6 +73,18 @@ func normalizeFlight(f LionAirFlight) (domain.Flight, error) {
 		}
 	}
 
+	// Build amenities from services fields
+	var amenities []string
+	if f.Services.WiFiAvailable {
+		amenities = append(amenities, "wifi")
+	}
+	if f.Services.MealsIncluded {
+		amenities = append(amenities, "meal")
+	}
+	if amenities == nil {
+		amenities = []string{}
+	}
+
 	return domain.Flight{
 		ID:           f.ID,
 		FlightNumber: f.ID,
@@ -94,17 +106,20 @@ func normalizeFlight(f LionAirFlight) (domain.Flight, error) {
 		},
 		Duration: domain.NewDurationInfo(f.FlightTime),
 		Price: domain.PriceInfo{
-			Amount:   f.Pricing.Total,
-			Currency: f.Pricing.Currency,
+			Amount:    f.Pricing.Total,
+			Currency:  f.Pricing.Currency,
 			Formatted: util.FormatIDR(f.Pricing.Total),
 		},
 		Baggage: domain.BaggageInfo{
 			CabinKg:   cabinKg,
 			CheckedKg: checkedKg,
 		},
-		Class:    normalizeClass(f.Pricing.FareType),
-		Stops:    stops,
-		Provider: ProviderName,
+		Class:          normalizeClass(f.Pricing.FareType),
+		Stops:          stops,
+		Provider:       ProviderName,
+		AvailableSeats: f.SeatsLeft,
+		Aircraft:       f.PlaneType,
+		Amenities:      amenities,
 	}, nil
 }
 

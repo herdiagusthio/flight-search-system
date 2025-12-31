@@ -124,14 +124,34 @@ func ToFlightDTO(flight domain.Flight) FlightDTO {
 		arrivalCity = flight.Arrival.AirportCode
 	}
 
-	// Format baggage information
-	carryOn := fmt.Sprintf("%dkg cabin", flight.Baggage.CabinKg)
-	checked := fmt.Sprintf("%dkg checked", flight.Baggage.CheckedKg)
-	if flight.Baggage.CabinKg == 0 {
-		carryOn = "Not included"
+	// Format baggage information - prefer descriptive strings if available
+	carryOn := flight.Baggage.CarryOnDesc
+	if carryOn == "" {
+		if flight.Baggage.CabinKg > 0 {
+			carryOn = fmt.Sprintf("%dkg cabin", flight.Baggage.CabinKg)
+		} else {
+			carryOn = "Not included"
+		}
 	}
-	if flight.Baggage.CheckedKg == 0 {
-		checked = "Not included"
+	checked := flight.Baggage.CheckedDesc
+	if checked == "" {
+		if flight.Baggage.CheckedKg > 0 {
+			checked = fmt.Sprintf("%dkg checked", flight.Baggage.CheckedKg)
+		} else {
+			checked = "Not included"
+		}
+	}
+
+	// Handle aircraft pointer - nil if empty string
+	var aircraft *string
+	if flight.Aircraft != "" {
+		aircraft = &flight.Aircraft
+	}
+
+	// Ensure amenities is never nil for consistent JSON
+	amenities := flight.Amenities
+	if amenities == nil {
+		amenities = []string{}
 	}
 
 	return FlightDTO{
@@ -163,10 +183,10 @@ func ToFlightDTO(flight domain.Flight) FlightDTO {
 			Amount:   flight.Price.Amount,
 			Currency: flight.Price.Currency,
 		},
-		AvailableSeats: 0, // Not available in domain.Flight, set in handler
+		AvailableSeats: flight.AvailableSeats,
 		CabinClass:     flight.Class,
-		Aircraft:       nil, // Not available in domain.Flight, set in handler
-		Amenities:      []string{}, // Not available in domain.Flight, set in handler
+		Aircraft:       aircraft,
+		Amenities:      amenities,
 		Baggage: BaggageDTO{
 			CarryOn: carryOn,
 			Checked: checked,

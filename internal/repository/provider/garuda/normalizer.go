@@ -94,9 +94,12 @@ func normalizeFlight(f GarudaFlight) (domain.Flight, error) {
 			CabinKg:   f.Baggage.CarryOn * DefaultCabinBaggageKg,
 			CheckedKg: f.Baggage.Checked * DefaultCheckedBaggageKg,
 		},
-		Class:    normalizeClass(f.FareClass),
-		Stops:    stops,
-		Provider: ProviderName,
+		Class:          normalizeClass(f.FareClass),
+		Stops:          stops,
+		Provider:       ProviderName,
+		AvailableSeats: f.AvailableSeats,
+		Aircraft:       f.Aircraft,
+		Amenities:      f.Amenities,
 	}, nil
 }
 
