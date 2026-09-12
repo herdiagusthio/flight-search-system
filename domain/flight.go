@@ -1,79 +1,125 @@
 package domain
 
 import (
+	"errors"
 	"fmt"
-	"strconv"
+	"regexp"
+	"strings"
 	"time"
 )
 
-// Flight represents a single flight offering from a provider.
+var (
+	ErrInvalidAirportCode = errors.New("invalid airport code: must be 3 uppercase letters")
+	ErrInvalidCurrency    = errors.New("invalid currency: must be 3 uppercase letters (ISO 4217)")
+	ErrInvalidFlightNum   = errors.New("invalid flight number: cannot be empty")
+)
+
+// AirportCode represents an IATA airport code (e.g., CGK, SIN).
+type AirportCode string
+
+func NewAirportCode(code string) (AirportCode, error) {
+	code = strings.ToUpper(strings.TrimSpace(code))
+	if matched, _ := regexp.MatchString(`^[A-Z]{3}$`, code); !matched {
+		return "", ErrInvalidAirportCode
+	}
+	return AirportCode(code), nil
+}
+
+func (a AirportCode) String() string {
+	return string(a)
+}
+
+// Currency represents an ISO 4217 currency code (e.g., USD, IDR).
+type Currency string
+
+func NewCurrency(c string) (Currency, error) {
+	c = strings.ToUpper(strings.TrimSpace(c))
+	if matched, _ := regexp.MatchString(`^[A-Z]{3}$`, c); !matched {
+		return "", ErrInvalidCurrency
+	}
+	return Currency(c), nil
+}
+
+func (c Currency) String() string {
+	return string(c)
+}
+
+// FlightNumber represents a provider's flight identifier.
+type FlightNumber string
+
+func NewFlightNumber(fn string) (FlightNumber, error) {
+	fn = strings.TrimSpace(fn)
+	if fn == "" {
+		return "", ErrInvalidFlightNum
+	}
+	return FlightNumber(fn), nil
+}
+
+func (fn FlightNumber) String() string {
+	return string(fn)
+}
+
 type Flight struct {
-	ID             string       `json:"id"`
-	FlightNumber   string       `json:"flightNumber"`
-	Airline        AirlineInfo  `json:"airline"`
-	Departure      FlightPoint  `json:"departure"`
-	Arrival        FlightPoint  `json:"arrival"`
-	Duration       DurationInfo `json:"duration"`
-	Price          PriceInfo    `json:"price"`
-	Baggage        BaggageInfo  `json:"baggage"`
-	Class          string       `json:"class"`
-	Stops          int          `json:"stops"`
-	Provider       string       `json:"provider"`
-	RankingScore   float64      `json:"rankingScore,omitempty"`
-	AvailableSeats int          `json:"availableSeats"`
-	Aircraft       string       `json:"aircraft,omitempty"`
-	Amenities      []string     `json:"amenities,omitempty"`
+	ID             string
+	FlightNumber   FlightNumber
+	Airline        AirlineInfo
+	Departure      FlightPoint
+	Arrival        FlightPoint
+	Duration       DurationInfo
+	Price          PriceInfo
+	Baggage        BaggageInfo
+	Class          string
+	Stops          int
+	Provider       string
+	RankingScore   float64
+	AvailableSeats int
+	Aircraft       string
+	Amenities      []string
 }
 
-// AirlineInfo contains information about an airline.
 type AirlineInfo struct {
-	Code string `json:"code"`
-	Name string `json:"name"`
-	Logo string `json:"logo,omitempty"`
+	Code string
+	Name string
+	Logo string
 }
 
-// FlightPoint represents a departure or arrival point.
 type FlightPoint struct {
-	AirportCode string    `json:"airportCode"`
-	AirportName string    `json:"airportName,omitempty"`
-	Terminal    string    `json:"terminal,omitempty"`
-	DateTime    time.Time `json:"dateTime"`
-	Timezone    string    `json:"timezone,omitempty"`
+	AirportCode AirportCode
+	AirportName string
+	Terminal    string
+	DateTime    time.Time
+	Timezone    string
 }
 
-// DurationInfo contains flight duration information.
 type DurationInfo struct {
-	TotalMinutes int    `json:"totalMinutes"`
-	Formatted    string `json:"formatted"`
+	TotalMinutes int
+	Formatted    string
 }
 
-// PriceInfo contains pricing information for a flight.
 type PriceInfo struct {
-	Amount    float64 `json:"amount"`
-	Currency  string  `json:"currency"`
-	Formatted string  `json:"formatted,omitempty"`
+	AmountCents int64    // Changed from float64 to prevent precision errors
+	Currency    Currency
+	Formatted   string
 }
 
-// BaggageInfo contains baggage allowance information.
 type BaggageInfo struct {
-	CabinKg     int    `json:"cabinKg"`
-	CheckedKg   int    `json:"checkedKg"`
-	CarryOnDesc string `json:"carryOnDesc,omitempty"`
-	CheckedDesc string `json:"checkedDesc,omitempty"`
+	CabinKg     int
+	CheckedKg   int
+	CarryOnDesc string
+	CheckedDesc stringS
 }
 
-// NewDurationInfo creates a DurationInfo from total minutes and formats it.
 func NewDurationInfo(totalMinutes int) DurationInfo {
 	hours := totalMinutes / 60
 	mins := totalMinutes % 60
 
 	var formatted string
 	if hours > 0 && mins > 0 {
-		formatted = formatDuration(hours, mins)
+		formatted = fmt.Sprintf("%dh %dm", hours, mins)
 	} else if hours > 0 {
-		formatted = formatHoursOnly(hours)
+		formatted = fmt.Sprintf("%dh", hours)
 	} else {
-		formatted = formatMinutesOnly(mins)
+		formatted = fmt.Sprintf("%dm", mins)
 	}
 
 	return DurationInfo{
@@ -82,60 +128,21 @@ func NewDurationInfo(totalMinutes int) DurationInfo {
 	}
 }
 
-// formatDuration formats hours and minutes as "Xh Ym".
-func formatDuration(hours, mins int) string {
-	return strconv.Itoa(hours) + "h " + strconv.Itoa(mins) + "m"
-}
-
-// formatHoursOnly formats hours as "Xh".
-func formatHoursOnly(hours int) string {
-	return strconv.Itoa(hours) + "h"
-}
-
-// formatMinutesOnly formats minutes as "Xm".
-func formatMinutesOnly(mins int) string {
-	return strconv.Itoa(mins) + "m"
-}
-
-
-
-// Validate checks if the flight data is valid and consistent.
-// It returns an error if:
-//   - Arrival time is not after departure time
-//   - Required fields are missing (FlightNumber, Airline.Code, Origin, Destination)
-//
-// It logs a warning (but doesn't fail) if:
-//   - Duration doesn't match the calculated time difference
-//
-// This method is used by provider adapters to ensure data integrity.
 func (f *Flight) Validate() error {
-	// Check that arrival is after departure
 	if !f.Arrival.DateTime.After(f.Departure.DateTime) {
-		return fmt.Errorf("%w: arrival time (%s) must be after departure time (%s)",
-			ErrInvalidFlightTimes,
-			f.Arrival.DateTime.Format(time.RFC3339),
-			f.Departure.DateTime.Format(time.RFC3339))
+		return fmt.Errorf("%w: arrival time must be after departure", ErrInvalidFlightTimes)
 	}
-
-	// Check required fields
 	if f.FlightNumber == "" {
 		return fmt.Errorf("%w: FlightNumber", ErrMissingRequiredField)
 	}
-
 	if f.Airline.Code == "" {
 		return fmt.Errorf("%w: Airline.Code", ErrMissingRequiredField)
 	}
-
 	if f.Departure.AirportCode == "" {
 		return fmt.Errorf("%w: Departure.AirportCode", ErrMissingRequiredField)
 	}
-
 	if f.Arrival.AirportCode == "" {
 		return fmt.Errorf("%w: Arrival.AirportCode", ErrMissingRequiredField)
 	}
-
-	// Note: Duration mismatch is logged as a warning in the provider adapters
-	// but doesn't fail validation, as providers may calculate it differently
-
 	return nil
 }

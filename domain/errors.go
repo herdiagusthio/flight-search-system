@@ -5,133 +5,83 @@ import (
 	"fmt"
 )
 
-// Domain errors are sentinel errors that can be used with errors.Is() for comparison.
-// They represent common failure scenarios in the flight search domain.
-var (
-	// ErrInvalidRequest indicates the request parameters are invalid (HTTP 400).
-	// This error should be wrapped with specific details about what is invalid.
-	ErrInvalidRequest = errors.New("invalid request")
+// ErrorCategory defines the nature of the failure to determine the recovery strategy.
+type ErrorCategory int
 
-	// ErrAllProvidersFailed indicates all flight providers failed to respond (HTTP 503).
-	// This typically means the service is temporarily unavailable.
-	ErrAllProvidersFailed = errors.New("all providers failed")
-
-	// ErrProviderTimeout indicates a specific provider timed out.
-	// This is an internal error used during aggregation.
-	ErrProviderTimeout = errors.New("provider timeout")
-
-	// ErrProviderUnavailable indicates a provider is not reachable.
-	ErrProviderUnavailable = errors.New("provider unavailable")
-
-	// ErrNoFlightsFound indicates no flights matched the search criteria.
-	// This is not necessarily an error but useful for explicit handling.
-	ErrNoFlightsFound = errors.New("no flights found")
-
-	// ErrInvalidFlightTimes indicates flight arrival time is not after departure time.
-	// This represents invalid data from a provider.
-	ErrInvalidFlightTimes = errors.New("invalid flight times")
-
-	// ErrMissingRequiredField indicates a required field is missing from flight data.
-	// This represents incomplete data from a provider.
-	ErrMissingRequiredField = errors.New("missing required field")
+const (
+	CategoryUnknown ErrorCategory = iota
+	CategoryTransient // Retryable: network glitch, 503, rate limit
+	CategoryPermanent // Fatal: 400 Bad Request, 401 Unauthorized, 404 Not Found
+	CategoryCritical  // System failure: panic, database down
 )
 
-// ProviderError wraps an error with provider context.
-// It includes information about whether the error is retryable,
-// which helps the use case layer decide on retry strategies.
-type ProviderError struct {
-	// Provider is the name/identifier of the provider that failed
-	Provider string
-
-	// Err is the underlying error
-	Err error
-
-	// Retryable indicates whether this error is transient and the operation
-	// might succeed if retried. Examples of retryable errors:
-	//   - Temporary network issues
-	//   - Rate limiting (429)
-	//   - Service temporarily unavailable (503)
-	// Examples of non-retryable errors:
-	//   - Invalid request parameters (400)
-	//   - Authentication failures (401)
-	//   - Resource not found (404)
-	Retryable bool
+// DomainError is the base for all domain-level errors.
+type DomainError struct {
+	Category ErrorCategory
+	Message  string
+	Err      error
 }
 
-// Error implements the error interface.
-func (e *ProviderError) Error() string {
-	return fmt.Sprintf("provider %s: %v", e.Provider, e.Err)
+func (e *DomainError) Error() string {
+	return fmt.Sprintf("[%s] %s", e.CategoryName(), e.Message)
 }
 
-// Unwrap returns the underlying error for errors.Is/As support.
-func (e *ProviderError) Unwrap() error {
+func (e *DomainError) Unwrap() error {
 	return e.Err
 }
 
-// NewProviderError creates a new ProviderError.
-// By default, errors are considered non-retryable.
-func NewProviderError(provider string, err error) *ProviderError {
-	return &ProviderError{
-		Provider:  provider,
-		Err:       err,
-		Retryable: false,
+func (e *DomainError) Category() ErrorCategory {
+	return e.Category
+}
+
+func (e *DomainError) CategoryName() string {
+	switch e.Category {
+	case CategoryTransient:
+		return "TRANSIENT"
+	case CategoryPermanent:
+		return "PERMANENT"
+	case CategoryCritical:
+		return "CRITICAL"
+	default:
+		return "UNKNOWN"
 	}
 }
 
-// NewRetryableProviderError creates a new ProviderError marked as retryable.
-func NewRetryableProviderError(provider string, err error) *ProviderError {
-	return &ProviderError{
-		Provider:  provider,
-		Err:       err,
-		Retryable: true,
+// Sentinel errors for common scenarios
+var (
+	ErrInvalidRequest = errors.New("invalid request")
+	ErrAllProvidersFailed = errors.New("all providers failed")
+	ErrProviderTimeout = errors.New("provider timeout")
+	ErrProviderUnavailable = errors.New("provider unavailable")
+	ErrNoFlightsFound = errors.New("no flights found")
+	ErrInvalidFlightTimes = errors.New("invalid flight times")
+	ErrMissingRequiredField = errors.New("missing required field")
+)
+
+// NewDomainError creates a structured domain error.
+func NewDomainError(cat ErrorCategory, msg string, err error) error {
+	return &DomainError{
+		Category: cat,
+		Message:  msg,
+		Err:      err,
 	}
 }
 
-// NewProviderTimeoutError creates a timeout error for a specific provider.
-func NewProviderTimeoutError(provider string) *ProviderError {
-	return NewProviderError(provider, ErrProviderTimeout)
-}
-
-// NewProviderUnavailableError creates an unavailable error for a specific provider.
-func NewProviderUnavailableError(provider string) *ProviderError {
-	return NewProviderError(provider, ErrProviderUnavailable)
-}
-
-// ValidationError represents a validation error with field details.
-type ValidationError struct {
-	Field   string
-	Message string
-}
-
-// Error implements the error interface.
-func (e *ValidationError) Error() string {
-	return fmt.Sprintf("%s: %s", e.Field, e.Message)
-}
-
-// NewValidationError creates a new validation error for a specific field.
-func NewValidationError(field, message string) *ValidationError {
-	return &ValidationError{
-		Field:   field,
-		Message: message,
+// IsTransient checks if an error is retryable.
+func IsTransient(err error) bool {
+	var dErr *DomainError
+	if errors.As(err, &dErr) {
+		return dErr.Category == CategoryTransient
 	}
+	// Default to non-retryable if unknown
+	return false
 }
 
-// WrapInvalidRequest wraps an error as an invalid request error.
-func WrapInvalidRequest(format string, args ...interface{}) error {
-	return fmt.Errorf("%w: %s", ErrInvalidRequest, fmt.Sprintf(format, args...))
-}
-
-// IsInvalidRequest checks if an error is an invalid request error.
-func IsInvalidRequest(err error) bool {
-	return errors.Is(err, ErrInvalidRequest)
-}
-
-// IsAllProvidersFailed checks if an error indicates all providers failed.
-func IsAllProvidersFailed(err error) bool {
-	return errors.Is(err, ErrAllProvidersFailed)
-}
-
-// IsProviderTimeout checks if an error is a provider timeout error.
-func IsProviderTimeout(err error) bool {
-	return errors.Is(err, ErrProviderTimeout)
+// IsPermanent checks if an error is a fatal request error.
+func IsPermanent(err error) bool {
+	var dErr *DomainError
+	if errors.As(err, &dErr) {
+		return dErr.Category == CategoryPermanent
+	}
+	return false
 }
