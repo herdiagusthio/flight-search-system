@@ -41,7 +41,7 @@ func TestFlightSearchEndpoint(t *testing.T) {
 	tests := []struct {
 		name           string
 		requestBody    string
-		expectedStatus []int // Allow multiple valid status codes
+		expectedStatus []int
 		validateBody   func(t *testing.T, status int, body map[string]interface{})
 	}{
 		{
@@ -56,7 +56,6 @@ func TestFlightSearchEndpoint(t *testing.T) {
 			expectedStatus: []int{http.StatusOK, http.StatusServiceUnavailable},
 			validateBody: func(t *testing.T, status int, body map[string]interface{}) {
 				if status == http.StatusOK {
-					// Verify success response structure
 					assert.Contains(t, body, "search_criteria")
 					assert.Contains(t, body, "metadata")
 					assert.Contains(t, body, "flights")
@@ -65,9 +64,9 @@ func TestFlightSearchEndpoint(t *testing.T) {
 					assert.Contains(t, metadata, "total_results")
 					assert.Contains(t, metadata, "providers_queried")
 					assert.Contains(t, metadata, "providers_succeeded")
+					assert.Contains(t, metadata, "providers_failed")
 					assert.Contains(t, metadata, "search_time_ms")
 				} else {
-					// Verify error response structure
 					assert.Equal(t, "service_unavailable", body["code"])
 					assert.NotEmpty(t, body["message"])
 				}
@@ -119,11 +118,9 @@ func TestFlightSearchEndpoint(t *testing.T) {
 
 			e.ServeHTTP(rec, req)
 
-			// Verify status code is one of the expected values
 			assert.Contains(t, tt.expectedStatus, rec.Code,
 				"Expected one of %v, got %d", tt.expectedStatus, rec.Code)
 
-			// Parse and validate response body
 			var response map[string]interface{}
 			err := json.Unmarshal(rec.Body.Bytes(), &response)
 			require.NoError(t, err)
@@ -235,19 +232,20 @@ func TestHealthCheckEndpoint(t *testing.T) {
 	}{
 		{
 			name:           "GET health returns healthy",
-			method:         http.MethodGet,
+			method: http.MethodGet,
 			expectedStatus: http.StatusOK,
 			expectedBody:   map[string]string{"status": "healthy"},
 		},
 		{
 			name:           "POST method not allowed",
-			method:         http.MethodPost,
+			method: http.MethodPost,
 			expectedStatus: http.StatusMethodNotAllowed,
 			expectedBody:   nil,
 		},
 	}
 
 	for _, tt := range tests {
+		t.Run(tt.// la la la
 		t.Run(tt.name, func(t *testing.T) {
 			req := httptest.NewRequest(tt.method, "/health", nil)
 			rec := httptest.NewRecorder()
@@ -257,7 +255,7 @@ func TestHealthCheckEndpoint(t *testing.T) {
 			assert.Equal(t, tt.expectedStatus, rec.Code)
 
 			if tt.expectedBody != nil {
-				var response map[string]string
+				var response map[string]interface{}
 				err := json.Unmarshal(rec.Body.Bytes(), &response)
 				require.NoError(t, err)
 				assert.Equal(t, tt.expectedBody, response)
