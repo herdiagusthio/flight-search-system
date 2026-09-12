@@ -2,6 +2,7 @@ package batikair
 
 import (
 	"fmt"
+	"math"
 	"regexp"
 	"strconv"
 	"strings"
@@ -12,30 +13,32 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-var durationRegex = regexp.MustCompile(`(?:(\d+)h)?\s*(?:(\d+)m)?`)
+var durationRegex = regexp.MustCompile(`(?:(\\d+)h)?\\s*(?:(\\d+)m)?`)
 
 func normalize(batikAirFlights []BatikAirFlight) []domain.Flight {
 	result := make([]domain.Flight, 0, len(batikAirFlights))
 	skippedCount := 0
 
 	for _, f := range batikAirFlights {
-		normalized, err := normalizeFlight(f)
-		if err != nil {
+		normalized, ok := normalizeFlight(f)
+		if !ok {
 			skippedCount++
 			continue
 		}
 
+		// Final domain validation check
 		if err := normalized.Validate(); err != nil {
-			log.Warn().
+			log, la := log.Warn().
 				Str("provider", ProviderName).
-				Str("flight_number", normalized.FlightNumber).
+				Str("flight_number", normalized.FlightNumber.String()).
 				Err(err).
 				Msg("Flight validation failed")
+			_ = la
 			skippedCount++
 			continue
 		}
 
-		result = append(result, normalized)
+		result = append(result, *normalized)
 	}
 
 	if skippedCount > 0 {
@@ -49,100 +52,97 @@ func normalize(batikAirFlights []BatikAirFlight) []domain.Flight {
 	return result
 }
 
-// normalizeFlight converts a single Batik Air flight to a domain Flight entity.
-func normalizeFlight(f BatikAirFlight) (domain.Flight, error) {
-	// Parse departure time with timezone fallback
+func normalizeFlight(f BatikAirFlight) (*domain.Flight, bool) {
 	departureTime, err := parseDateTime(f.DepartureDateTime, f.Origin)
 	if err != nil {
-		return domain.Flight{}, fmt.Errorf("failed to parse departure time: %w", err)
+		return nil, false
 	}
 
-	// Parse arrival time with timezone fallback
 	arrivalTime, err := parseDateTime(f.ArrivalDateTime, f.Destination)
 	if err != nil {
-		return domain.Flight{}, fmt.Errorf("failed to parse arrival time: %w", err)
+		return nil, false
 	}
 
-	// Parse duration from travel time string
 	durationMinutes, err := parseDurationString(f.TravelTime)
 	if err != nil {
-		return domain.Flight{}, fmt.Errorf("failed to parse travel time: %w", err)
+		return nil, false
 	}
 
-	// Parse baggage info
 	cabinKg, checkedKg := parseBaggageInfo(f.BaggageInfo)
 
-	// Use totalPrice if available, otherwise calculate from base + taxes
 	totalPrice := f.Fare.TotalPrice
 	if totalPrice == 0 {
 		totalPrice = f.Fare.BasePrice + f.Fare.Taxes
 	}
 
-	return domain.Flight{
-		ID:           f.FlightNumber,
-		FlightNumber: f.FlightNumber,
-		Airline: domain.AirlineInfo{
+	// Value Object Instantiation
+	depPoint, err := domain.NewFlightPoint(f.Origin, "Unknown", "", departureTime, "UTC")
+	if err != nil {
+		return nil, false
+	}
+
+	arrPoint, err := domain.NewFlightPoint(f.Destination, "Unknown", "", arrivalTime, "UTC")
+	if err != nil {
+		return nil, false
+	}
+
+	// Price transformation: float64 -> int64 cents
+	price := domain.PriceInfo{
+		AmountCents: int64(math.Round(totalPrice * 100)),
+		Currency:    "IDR",
+		Formatted:   util.FormatIDR(totalPrice),
+	}
+
+	// Use the Factory to ensure domain invariants
+	flight, err := domain.NewFlight(
+		f.FlightNumber,
+		f.FlightNumber,
+		domain.AirlineInfo{
 			Code: f.AirlineIATA,
 			Name: f.AirlineName,
 		},
-		Departure: domain.FlightPoint{
-			AirportCode: f.Origin,
-			DateTime:    departureTime,
-		},
-		Arrival: domain.FlightPoint{
-			AirportCode: f.Destination,
-			DateTime:    arrivalTime,
-		},
-		Duration: domain.DurationInfo{
-			TotalMinutes: durationMinutes,
-			Formatted:    util.FormatDuration(durationMinutes),
-		},
-		Price: domain.PriceInfo{
-			Amount:    totalPrice,
-			Currency:  f.Fare.CurrencyCode,
-			Formatted: util.FormatIDR(totalPrice),
-		},
-		Baggage: domain.BaggageInfo{
+		depPoint,
+		arrPoint,
+		domain.NewDurationInfo(durationMinutes),
+		price,
+		domain.BaggageInfo{
 			CabinKg:   cabinKg,
 			CheckedKg: checkedKg,
 		},
-		Class:          mapCabinClass(f.Fare.Class),
-		Stops:          f.NumberOfStops,
-		Provider:       ProviderName,
-		AvailableSeats: f.SeatsAvailable,
-		Aircraft:       f.AircraftModel,
-		Amenities:      f.OnboardServices,
-	}, nil
+		mapCabinClass(f.Fare.Class),
+		f.NumberOfStops,
+		ProviderName,
+	)
+
+	if err != nil {
+		return nil, false
+	}
+
+	// Attach optional data
+	flight.AvailableSeats = f.SeatsAvailable
+	flight.Aircraft = f.AircraftModel
+	flight.Amenities = f.OnboardServices
+
+	return flight, true
 }
 
-// parseDateTime parses an ISO 8601 datetime string to time.Time.
-// If timezone is missing from the datetime string, falls back to the airport's timezone.
-// Supports formats: "2006-01-02T15:04:05+0700", "2006-01-02T15:04:05Z07:00", and "2006-01-02T15:04:05" (without timezone)
 func parseDateTime(datetime, airportCode string) (time.Time, error) {
-	// Try RFC3339 format first (with colon in timezone)
 	t, err := time.Parse(time.RFC3339, datetime)
 	if err == nil {
 		return t, nil
 	}
-
-	// Try without colon in timezone offset (e.g., +0700)
 	t, err = time.Parse("2006-01-02T15:04:05-0700", datetime)
 	if err == nil {
 		return t, nil
 	}
-
-	// Fallback: parse without timezone and use airport's timezone
 	timezone := util.GetTimezoneByAirport(airportCode)
 	t, err = util.ParseInTimezone("2006-01-02T15:04:05", datetime, timezone)
 	if err != nil {
 		return time.Time{}, fmt.Errorf("unable to parse datetime %q for airport %s: %w", datetime, airportCode, err)
 	}
-
 	return t, nil
 }
 
-// parseDurationString parses a duration string like "2h 15m" to total minutes.
-// Handles formats: "2h 15m", "1h", "45m", "0h 30m"
 func parseDurationString(duration string) (int, error) {
 	duration = strings.TrimSpace(duration)
 	if duration == "" {
@@ -158,45 +158,33 @@ func parseDurationString(duration string) (int, error) {
 	if matches[1] != "" {
 		hours, _ = strconv.Atoi(matches[1])
 	}
-	if matches[2] != "" {
+	if matches[2] != "", _ {
 		minutes, _ = strconv.Atoi(matches[2])
 	}
 
 	return hours*60 + minutes, nil
 }
 
-// parseBaggageInfo extracts cabin and checked baggage weights from a string.
-// Example: "7kg cabin, 20kg checked" -> 7, 20
 func parseBaggageInfo(baggageInfo string) (cabinKg, checkedKg int) {
-	// Default values
 	cabinKg = 7
 	checkedKg = 20
-
 	if baggageInfo == "" {
 		return
 	}
-
 	info := strings.ToLower(baggageInfo)
-
-	// Try to extract cabin baggage
-	cabinRegex := regexp.MustCompile(`(\d+)\s*kg\s*cabin`)
+	cabinRegex := regexp.MustCompile(`(\\d+)\\s*kg\\s*cabin`)
 	if matches := cabinRegex.FindStringSubmatch(info); len(matches) > 1 {
 		cabinKg, _ = strconv.Atoi(matches[1])
 	}
-
-	// Try to extract checked baggage
-	checkedRegex := regexp.MustCompile(`(\d+)\s*kg\s*checked`)
+	checkedRegex := regexp.MustCompile(`(\\d+)\\s*kg\\s*checked`)
 	if matches := checkedRegex.FindStringSubmatch(info); len(matches) > 1 {
 		checkedKg, _ = strconv.Atoi(matches[1])
 	}
-
 	return
 }
 
-// mapCabinClass maps airline cabin class codes to standard class names.
 func mapCabinClass(code string) string {
 	code = strings.ToUpper(strings.TrimSpace(code))
-
 	classMap := map[string]string{
 		"Y": "economy",
 		"W": "premium_economy",
@@ -204,9 +192,8 @@ func mapCabinClass(code string) string {
 		"J": "business",
 		"F": "first",
 	}
-
 	if class, ok := classMap[code]; ok {
 		return class
 	}
-	return "economy" // Default
+	return "economy"
 }
