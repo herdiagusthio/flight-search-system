@@ -15,23 +15,24 @@ func normalize(garudaFlights []GarudaFlight) []domain.Flight {
 	skippedCount := 0
 
 	for _, f := range garudaFlights {
-		normalized, err := normalizeFlight(f)
-		if err != nil {
+		normalized, ok := normalizeFlight(f)
+		if !ok {
 			skippedCount++
 			continue
 		}
 
+		// Final domain validation check
 		if err := normalized.Validate(); err != nil {
 			log.Warn().
 				Str("provider", ProviderName).
-				Str("flight_number", normalized.FlightNumber).
+				Str("flight_number", normalized.FlightNumber.String()).
 				Err(err).
 				Msg("Flight validation failed")
 			skippedCount++
 			continue
 		}
 
-		result = append(result, normalized)
+		result = append(result, *normalized)
 	}
 
 	if skippedCount > 0 {
@@ -45,85 +46,86 @@ func normalize(garudaFlights []GarudaFlight) []domain.Flight {
 	return result
 }
 
-// normalizeFlight converts a single Garuda flight to a domain Flight entity.
-func normalizeFlight(f GarudaFlight) (domain.Flight, error) {
-	// Parse departure time with timezone fallback
+func normalizeFlight(f GarudaFlight) (*domain.Flight, bool) {
 	departureTime, err := parseDateTime(f.Departure.Time, f.Departure.Airport)
 	if err != nil {
-		return domain.Flight{}, fmt.Errorf("failed to parse departure time: %w", err)
+		return nil, false
 	}
 
-	// Parse arrival time with timezone fallback
 	arrivalTime, err := parseDateTime(f.Arrival.Time, f.Arrival.Airport)
 	if err != nil {
-		return domain.Flight{}, fmt.Errorf("failed to parse arrival time: %w", err)
+		return nil, false
 	}
 
-	// Calculate stops from segments if available, otherwise use stops field
 	stops := f.Stops
 	if len(f.Segments) > 1 {
 		stops = len(f.Segments) - 1
 	}
 
-	return domain.Flight{
-		ID:           f.FlightID,
-		FlightNumber: f.FlightID, // Use flight_id as flight number since it contains the flight identifier
-		Airline: domain.AirlineInfo{
+	// Value Object Instantiation
+	depPoint, err := domain.NewFlightPoint(f.Departure.Airport, formatAirportName(f.Departure.Airport, f.Departure.City), f.Departure.Terminal, departureTime, "UTC")
+	if err != nil {
+		return nil, false
+	}
+
+	arrPoint, err := domain.NewFlightPoint(f.Arrival.Airport, formatAirportName(f.Arrival.Airport, f.Arrival.City), f.Arrival.Terminal, arrivalTime, "UTC")
+	if err != nil {
+		return nil, false
+	}
+
+	// Price transformation: float64 -> int64 cents
+	price := domain.PriceInfo{
+		AmountCents: int64(math.Round(f.Price.Amount * 100)),
+		Currency:    "IDR", 
+		Formatted:   util.FormatIDR(f.Price.Amount),
+	}
+
+	// Use the Factory to ensure domain invariants
+	flight, err := domain.NewFlight(
+		f.FlightID,
+		f.FlightID,
+		domain.AirlineInfo{
 			Code: f.AirlineCode,
 			Name: f.Airline,
 		},
-		Departure: domain.FlightPoint{
-			AirportCode: f.Departure.Airport,
-			AirportName: formatAirportName(f.Departure.Airport, f.Departure.City),
-			Terminal:    f.Departure.Terminal,
-			DateTime:    departureTime,
-		},
-		Arrival: domain.FlightPoint{
-			AirportCode: f.Arrival.Airport,
-			AirportName: formatAirportName(f.Arrival.Airport, f.Arrival.City),
-			Terminal:    f.Arrival.Terminal,
-			DateTime:    arrivalTime,
-		},
-		Duration: domain.NewDurationInfo(f.DurationMinutes),
-		Price: domain.PriceInfo{
-			Amount:    f.Price.Amount,
-			Currency:  f.Price.Currency,
-			Formatted: util.FormatIDR(f.Price.Amount),
-		},
-		Baggage: domain.BaggageInfo{
+		depPoint,
+		arrPoint,
+		domain.NewDurationInfo(f.DurationMinutes),
+		price,
+		domain.BaggageInfo{
 			CabinKg:   f.Baggage.CarryOn * DefaultCabinBaggageKg,
 			CheckedKg: f.Baggage.Checked * DefaultCheckedBaggageKg,
 		},
-		Class:          normalizeClass(f.FareClass),
-		Stops:          stops,
-		Provider:       ProviderName,
-		AvailableSeats: f.AvailableSeats,
-		Aircraft:       f.Aircraft,
-		Amenities:      f.Amenities,
-	}, nil
+		normalizeClass(f.FareClass),
+		stops,
+		ProviderName,
+	)
+
+	if err != nil {
+		return nil, false
+	}
+
+	// Attach optional data
+	flight.AvailableSeats = f.AvailableSeats
+	flight.Aircraft = f.Aircraft
+	flight.Amenities = f.Amenities
+
+	return flight, true
 }
 
-// parseDateTime parses an ISO 8601 datetime string to time.Time.
-// If timezone is missing from the datetime string, falls back to the airport's timezone.
-// Supports formats: "2006-01-02T15:04:05Z07:00" (with timezone) and "2006-01-02T15:04:05" (without timezone)
 func parseDateTime(dateTime, airportCode string) (time.Time, error) {
-	// Try RFC3339 format first (with timezone)
 	t, err := time.Parse(time.RFC3339, dateTime)
 	if err == nil {
 		return t, nil
 	}
-
-	// Fallback: parse without timezone and use airport's timezone
 	timezone := util.GetTimezoneByAirport(airportCode)
 	t, err = util.ParseInTimezone("2006-01-02T15:04:05", dateTime, timezone)
 	if err != nil {
 		return time.Time{}, fmt.Errorf("unable to parse datetime %q for airport %s: %w", dateTime, airportCode, err)
 	}
-
 	return t, nil
 }
 
-// formatAirportName creates a formatted airport name from code and city.
 func formatAirportName(code, city string) string {
 	if city == "" {
 		return code
@@ -131,10 +133,8 @@ func formatAirportName(code, city string) string {
 	return fmt.Sprintf("%s (%s)", city, code)
 }
 
-// normalizeClass normalizes the class string to lowercase standard values.
 func normalizeClass(class string) string {
 	normalized := strings.ToLower(strings.TrimSpace(class))
-
 	switch normalized {
 	case "economy", "eco", "y":
 		return "economy"
@@ -143,6 +143,6 @@ func normalizeClass(class string) string {
 	case "first", "f":
 		return "first"
 	default:
-		return "economy" // Default to economy if unknown
+		return "economy"
 	}
 }
